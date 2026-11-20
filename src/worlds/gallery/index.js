@@ -1,9 +1,9 @@
 import * as THREE from 'three';
-import { World, beam } from '../engine/world.js';
-import { Sky } from '../engine/sky.js';
-import { paintMaterial, glowPoints, GroundMaps, G } from '../engine/paint.js';
-import { Builder, mix, xf } from '../engine/build.js';
-import { rng, clamp, damp } from '../engine/gl.js';
+import { World, beam } from '../../engine/world.js';
+import { Sky } from '../../engine/sky.js';
+import { paintMaterial, glowPoints, GroundMaps, G } from '../../engine/paint.js';
+import { Builder, mix, xf } from '../../engine/build.js';
+import { rng, clamp, damp } from '../../engine/gl.js';
 
 // The Gallery Between: a half-dark copy of the museum that lives inside the
 // paintings. Every frame is a door. It warms up as the paintings come home.
