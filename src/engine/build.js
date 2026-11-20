@@ -131,6 +131,30 @@ export class Builder {
     m.frustumCulled = false;
     return m;
   }
+  // Like mesh(), but cut into square cells of ground, each its own mesh that is skipped when it
+  // is out of view. For builders that cover a whole landscape. Returns a Group.
+  meshes(material, cell = 90) {
+    const cells = new Map();
+    for (const g of this.parts) {
+      g.computeBoundingBox();
+      const b = g.boundingBox;
+      const k = Math.floor((b.min.x + b.max.x) / 2 / cell) + ':' + Math.floor((b.min.z + b.max.z) / 2 / cell);
+      let a = cells.get(k);
+      if (!a) cells.set(k, (a = []));
+      a.push(g);
+    }
+    this.parts.length = 0;
+    const out = new THREE.Group();
+    for (const a of cells.values()) {
+      const geo = mergeGeometries(a, false);
+      geo.computeBoundingSphere();
+      geo.boundingSphere.radius += 3; // room for things that sway
+      const m = new THREE.Mesh(geo, material);
+      m.frustumCulled = true;
+      out.add(m);
+    }
+    return out;
+  }
 }
 
 // ---------------------------------------------------------------- ground

@@ -132,8 +132,8 @@ export class WaveWorld extends World {
     for (let i = this.colliders.length - 1; i >= 0; i--) if (this.colliders[i].spare) this.colliders.splice(i, 1);
     addMist(this, kit);
 
-    S.add(X.mesh(flat({ scale: 0.25, emissive: 1.5 })));
-    S.add(T2.mesh(flat({ scale: 0.2 })));
+    S.add(X.meshes(flat({ scale: 0.25, emissive: 1.5 })));
+    S.add(T2.meshes(flat({ scale: 0.2 })));
 
     addPlovers(this, kit);
     addFarCoast(this, kit);

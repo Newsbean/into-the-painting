@@ -55,7 +55,7 @@ export function buildPrints(world, { flat }) {
 
   const { S, GR, X, P } = kit;
   const show = (b, mat) => {
-    const m = b.mesh(mat);
+    const m = b.meshes(mat); // in cells of ground: the prints cover the whole coast
     m.name = 'prints';
     S.add(m);
   };

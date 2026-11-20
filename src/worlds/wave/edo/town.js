@@ -26,12 +26,13 @@ export const edoLevel = (x, z) => 2.4 + (z - EDO_TOWN.z0) * 0.022;
 
 export function edoStreets() {
   return [
-    { name: 'tokaido', pts: [[-236, 227], [-262, 229], [-300, 232], [-340, 234], [-380, 236], [-428, 238]], w: 9, main: true },
-    { name: 'quay', pts: [[-250, 211.5], [-300, 210.5], [-350, 211], [-422, 212]], w: 7, main: true, sides: [-1] }, // traced east to west: -1 is the land side
-    { name: 'back', pts: [[-252, 262], [-300, 264], [-350, 266], [-424, 268]], w: 6 },
-    { name: 'lane', pts: [[-276, 208], [-276, 232], [-277, 262], [-278, 296]], w: 6 },
-    { name: 'castle road', pts: [[-326, 208], [-326, 233], [-325, 265], [-324, 296]], w: 6.5, main: true },
-    { name: 'lane', pts: [[-376, 209], [-376, 235], [-377, 266], [-378, 296]], w: 6 },
+    // the quay is laid out first, so the waterfront is its own row of storehouses and shops
+    { name: 'quay', pts: [[-250, 210.5], [-300, 210], [-350, 210.5], [-422, 211.5]], w: 7, main: true, sides: [-1] }, // traced east to west: -1 is the land side
+    { name: 'tokaido', pts: [[-236, 227], [-256, 234], [-290, 240], [-340, 241], [-380, 242], [-428, 243]], w: 9, main: true },
+    { name: 'back', pts: [[-252, 271], [-300, 272], [-350, 273], [-424, 274]], w: 6 },
+    { name: 'lane', pts: [[-276, 207], [-276, 240], [-277, 272], [-278, 296]], w: 6 },
+    { name: 'castle road', pts: [[-326, 207], [-326, 241], [-325, 273], [-324, 296]], w: 6.5, main: true },
+    { name: 'lane', pts: [[-376, 208], [-376, 242], [-377, 273], [-378, 296]], w: 6 },
   ];
 }
 
@@ -43,7 +44,7 @@ export function addEdoTown(world, { S, H, maps, flat }) {
     keep: [{ x: CASTLE.x, z: CASTLE.z, r: 48 }, { x: PAGODA.x, z: PAGODA.z, r: 9 }],
     inside: (x, z) => x > EDO_TOWN.x0 + 3 && x < EDO_TOWN.x1 - 1 && z > 205.5 && z < 297,
     widths: [5.6, 9.2],
-    depths: [7.5, 10.5],
+    depths: [7.5, 10],
     setback: 0.5,
   });
   const mats = world.edoKit.mats;

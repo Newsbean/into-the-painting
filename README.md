@@ -125,6 +125,20 @@ Built on the engine's `facade.js`, `kit.js` and `plan.js`, which any world can u
 | `layout.js` | where the Starry Night's town lies and how its streets run |
 | `church.js` | the church with the steeple |
 
+## The Edo kit (`src/worlds/wave/edo`)
+
+The Great Wave's buildings, in the flat colour and clean line of the prints.
+
+| File | What it gives you |
+|---|---|
+| `house.js` | `machiya` (merchant house: lattice front, shop curtain, pent roof), `kura` (storehouse), `minka` (thatched farmhouse), `pagoda`, `tenshu` (the castle keep) |
+| `roof.js` | `roof(...)`: gable, hip and hip-and-gable roofs with hollowed slopes and lifted corners |
+| `kit.js` | `edoMaterials(strokes)`, `EdoKit`, and the hanging parts: noren, paper lanterns, signboards, rain barrels, benches |
+| `people.js` | townsfolk, travellers, porters; `edoCrowd` scatters them along streets |
+| `town.js` | Edo itself: streets, lots, the quay, the pagoda and the keep |
+
+Lab: `/?debug&look=wave&lab=worlds/wave/edo/lab.js`
+
 ## House rules
 
 - All art is made in code. Never add museum photographs or scans of the paintings.

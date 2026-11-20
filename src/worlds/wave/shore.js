@@ -80,7 +80,7 @@ export function addShore(world, { R, S, H, maps, flat, proxy }) {
     B.box(6.5, 0.8, 1.7, 0xd9c690, x, y + 0.1, z, ry);
     B.box(6.9, 0.14, 1.9, 0x8a6a48, x, y + 0.9, z, ry);
   }
-  S.add(B.mesh(flat({ scale: 0.25, emissive: 1.5 })));
+  S.add(B.meshes(flat({ scale: 0.25, emissive: 1.5 })));
 }
 
 // pines along the shore and on the hills
@@ -100,5 +100,5 @@ export function addShorePines(world, { R, S, H, maps, flat, SPARE }) {
     if (open) maps.blob(x, z, 4, 0.3);
     n++;
   }
-  S.add(T.mesh(flat({ scale: 0.2 })));
+  S.add(T.meshes(flat({ scale: 0.2 })));
 }
