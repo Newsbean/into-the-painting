@@ -261,6 +261,117 @@ function glaze(ctx, size, r, { n = 900, alpha = 0.26, dir = 0, spread = 0.35, le
   ctx.restore();
 }
 
+// ------------------------------------------------------------------
+// Woodblock surfaces (ukiyo-e): flat fields and clean lines, no loaded brush.
+// ------------------------------------------------------------------
+const field = (ctx, size, v, h = 0.5, b = 0.4) => {
+  ctx.fillStyle = px(v, h, b);
+  ctx.fillRect(0, 0, size, size);
+};
+// pan-and-roll roof tiles the way the prints draw them: ridges running down the slope, a row end now and then
+function paintKawara(ctx, size) {
+  field(ctx, size, 0.52);
+  const n = 16,
+    w = size / n,
+    rows = 8;
+  for (let i = 0; i < n; i++) {
+    const x = i * w;
+    ctx.fillStyle = px(0.64, 0.5, 0.6);
+    ctx.fillRect(x + w * 0.12, 0, w * 0.34, size);
+    ctx.fillStyle = px(0.3, 0.5, 0.2);
+    ctx.fillRect(x + w * 0.62, 0, w * 0.16, size);
+    ctx.fillStyle = px(0.18, 0.5, 0.1);
+    ctx.fillRect(x + w * 0.94, 0, w * 0.06, size);
+    for (let j = 0; j < rows; j++) {
+      ctx.fillStyle = px(0.26, 0.5, 0.15);
+      ctx.fillRect(x + w * 0.48, ((j + (i % 2 ? 0.5 : 0)) * size) / rows, w * 0.46, 5);
+    }
+  }
+}
+// thatch: fine combed straw, with the darker line of each layer
+function paintThatch(ctx, size, r) {
+  field(ctx, size, 0.5);
+  for (let i = 0; i < 2600; i++) {
+    const x = r() * size,
+      y = r() * size,
+      len = 40 + r() * 120,
+      w = 2 + r() * 3;
+    ctx.fillStyle = px(0.5 + (r() - 0.5) * 0.4, 0.5 + (r() - 0.5) * 0.3, 0.3 + r() * 0.5);
+    ctx.fillRect(x, y, w, len);
+    if (y + len > size) ctx.fillRect(x, y - size, w, len);
+  }
+  for (let j = 0; j < 4; j++) {
+    ctx.fillStyle = px(0.24, 0.5, 0.1);
+    ctx.fillRect(0, (j * size) / 4, size, 7);
+    ctx.fillStyle = px(0.66, 0.5, 0.7);
+    ctx.fillRect(0, (j * size) / 4 + 7, size, 5);
+  }
+}
+// board walls: upright boards with a batten over each joint
+function paintBoards(ctx, size, r) {
+  field(ctx, size, 0.5);
+  const n = 9,
+    w = size / n;
+  for (let i = 0; i < n; i++) {
+    const v = 0.5 + (r() - 0.5) * 0.16;
+    ctx.fillStyle = px(v, 0.5 + (r() - 0.5) * 0.2, 0.4);
+    ctx.fillRect(i * w, 0, w + 1, size);
+    for (let k = 0; k < 5; k++) {
+      ctx.fillStyle = px(v + (r() - 0.5) * 0.14, 0.5, 0.4);
+      ctx.fillRect(i * w + 24 + r() * (w - 34), 0, 2 + r() * 3, size);
+    }
+    ctx.fillStyle = px(0.2, 0.5, 0.1);
+    ctx.fillRect(i * w, 0, 5, size);
+    ctx.fillStyle = px(0.66, 0.5, 0.8);
+    ctx.fillRect(i * w + 5, 0, 13, size);
+    ctx.fillStyle = px(0.3, 0.5, 0.2);
+    ctx.fillRect(i * w + 18, 0, 4, size);
+  }
+}
+// koshi: the fine wooden lattice of a shopfront
+function paintKoshi(ctx, size) {
+  field(ctx, size, 0.14, 0.5, 0.05);
+  const n = 28,
+    w = size / n;
+  for (let i = 0; i < n; i++) {
+    ctx.fillStyle = px(0.6, 0.5, 0.7);
+    ctx.fillRect(i * w, 0, w * 0.55, size);
+    ctx.fillStyle = px(0.76, 0.5, 0.9);
+    ctx.fillRect(i * w, 0, w * 0.14, size);
+  }
+  for (const y of [0.04, 0.5, 0.96]) {
+    ctx.fillStyle = px(0.52, 0.5, 0.8);
+    ctx.fillRect(0, y * size - 12, size, 24);
+  }
+}
+// shoji: paper in a grid of thin bars
+function paintShoji(ctx, size) {
+  field(ctx, size, 0.62, 0.5, 0.4);
+  ctx.fillStyle = px(0.2, 0.5, 0.7);
+  for (let i = 0; i < 8; i++) ctx.fillRect((i * size) / 8 - 4, 0, 8, size);
+  for (let j = 0; j < 6; j++) ctx.fillRect(0, (j * size) / 6 - 4, size, 8);
+  ctx.fillRect(size - 4, 0, 4, size);
+  ctx.fillRect(0, size - 4, size, 4);
+}
+// namako wall: dark tiles set on the diagonal, their joints raised in white plaster
+function paintNamako(ctx, size) {
+  field(ctx, size, 0.24, 0.5, 0.2);
+  ctx.strokeStyle = px(0.82, 0.5, 0.9);
+  ctx.lineWidth = 22;
+  const n = 8,
+    s = size / n;
+  for (let k = -n; k <= 2 * n; k++) {
+    ctx.beginPath();
+    ctx.moveTo(k * s, 0);
+    ctx.lineTo(k * s + size, size);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(k * s, 0);
+    ctx.lineTo(k * s - size, size);
+    ctx.stroke();
+  }
+}
+
 export const BUILT = {
   // limestone in rough courses: farm and town walls
   masonry: (c, n, r) => (paintMasonry(c, n, r, { courses: 16, lo: 70, hi: 190 }), glaze(c, n, r, { n: 1000 })),
@@ -271,6 +382,15 @@ export const BUILT = {
   tiles: (c, n, r) => (paintTiles(c, n, r, { rows: 8, across: 16, scallop: 0.45, barrel: 1 }), glaze(c, n, r, { n: 800, alpha: 0.24, dir: Math.PI / 2, spread: 0.3 })),
   slate: (c, n, r) => (paintTiles(c, n, r, { rows: 10, across: 10, scallop: 1, barrel: 0, vary: 0.24, seed: 4000 }), glaze(c, n, r, { n: 900, alpha: 0.26, dir: Math.PI / 2, spread: 0.45 })),
   cobble: (c, n, r) => (paintCobbles(c, n, r, { n: 14 }), glaze(c, n, r, { n: 700, alpha: 0.2, spread: 3.2, len: [18, 60], w: [5, 14] })),
+  // the woodblock set
+  kawara: (c, n) => paintKawara(c, n),
+  thatch: (c, n, r) => paintThatch(c, n, r),
+  boards: (c, n, r) => paintBoards(c, n, r),
+  koshi: (c, n) => paintKoshi(c, n),
+  shoji: (c, n) => paintShoji(c, n),
+  namako: (c, n) => paintNamako(c, n),
+  // castle walls: big fitted stones
+  ishigaki: (c, n, r) => paintMasonry(c, n, r, { courses: 7, lo: 130, hi: 280, joint: 7, wander: 9, round: 14, mortar: 0.22, vary: 0.16, marks: 0 }),
   plank: (c, n, r) => (paintPlanks(c, n, r), glaze(c, n, r, { n: 500, alpha: 0.2, dir: Math.PI / 2, spread: 0.12, len: [60, 200], w: [3, 9] })),
 };
 

@@ -4,6 +4,7 @@ import { CLOTH, PALE, SKIN, STONE, STONE_D, THATCH, THATCH_D, TIMBER, VERM } fro
 import { nearRoute, keptClear } from '../ground-plan.js';
 import { rod } from '../helpers.js';
 import { tuft } from '../plants.js';
+import { minka as edoMinka } from '../edo/house.js';
 
 // What every print is handed: the dice, the builders they all draw into, and
 // the small tools for standing something on the land (a footing, a lantern, a
@@ -53,20 +54,7 @@ export function printKit(world, flat) {
     const y = hi + 0.1,
       h = o.h ?? 2.5,
       rh = o.roofH ?? Math.min(w, d) * 0.6;
-    const M = xf(x, 0, z, ry);
-    X.box(w + 0.6, y - lo + 0.6, d + 0.6, STONE_D, 0, lo - 0.6, 0, 0, undefined, M);
-    X.box(w, h, d, (px, py) => mix(o.wall ?? 0xdccfa8, 0x7a6a4a, clamp(0.3 - (py + h / 2) * 0.25, 0, 0.3)), 0, y, 0, 0, undefined, M);
-    for (const [a, b] of [[-1, -1], [1, -1], [1, 1], [-1, 1]]) X.box(0.2, h, 0.2, TIMBER, (a * w) / 2, y, (b * d) / 2, 0, undefined, M);
-    X.box(w + 0.16, 0.18, d + 0.16, TIMBER, 0, y + h - 0.18, 0, 0, undefined, M);
-    if (w >= d) {
-      X.hip(d + 1.8, w + 1.8, rh, thatch, 0, y + h, 0, Math.PI / 2, undefined, M, 0.5);
-      X.box((w + 1.8) * 0.5 + 0.5, 0.22, 0.55, THATCH_D, 0, y + h + rh - 0.08, 0, 0, undefined, M);
-    } else {
-      X.hip(w + 1.8, d + 1.8, rh, thatch, 0, y + h, 0, 0, undefined, M, 0.5);
-      X.box(0.55, 0.22, (d + 1.8) * 0.5 + 0.5, THATCH_D, 0, y + h + rh - 0.08, 0, 0, undefined, M);
-    }
-    X.box(1.0, 1.85, 0.1, TIMBER, o.door ?? -w * 0.2, y, d / 2 + 0.03, 0, undefined, M);
-    if (o.lit !== false) X.box(1.0, 0.8, 0.08, 0xffd58a, w * 0.24, y + 1.0, d / 2 + 0.03, 0, { emissive: 0.8 }, M);
+    edoMinka(world.edoKit, world, { x, z, ry, w, d, y, lo, h, roofH: rh, wall: o.wall, door: o.door, lit: o.lit });
     wall(x, z, w / 2 + 0.3, d / 2 + 0.3, ry, y + h + rh);
     maps.blob(x, z, Math.max(w, d) * 0.95, 0.4);
     return y;

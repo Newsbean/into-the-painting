@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { Builder, terrain, house, pine, mix } from '../../engine/build.js';
 import { vnoise, smooth, lerp } from '../../engine/gl.js';
 import { keptClear } from './ground-plan.js';
+import { machiya, rngAt } from './edo/house.js';
 
 // The land you arrive on: the ground itself, Hokusai's workshop and its
 // neighbours, the pier, and the pines along the shore.
@@ -13,36 +14,38 @@ export function addShore(world, { R, S, H, maps, flat, proxy }) {
     hill = 0x4f7a6a;
   const land = terrain(
     H,
-    230,
-    150,
+    470,
+    250,
     (x, z, y) => {
       const c = mix(sand, grass, smooth(1.6, 4.5, y + vnoise(x * 0.1, z * 0.1) * 1.5));
       return c.lerp(new THREE.Color(hill), smooth(7, 22, y));
     },
-    0.5,
+    0.6,
     2,
-    0,
+    -60,
     300
   );
   S.add(new THREE.Mesh(land, flat({ scale: 0.03 })));
 
   const B = new Builder();
   // Hokusai's workshop and a few neighbours
-  const edo = (x, z, ry, w, d, h, o = {}) =>
-    house(B, proxy, { R, x, z, ry, w, d, h, roofType: 'hip', roofH: 2.6, over: 1.1, ridge: 0.5, wall: 0xe9dfc6, roof: 0x3d4c5c, trim: 0x3a2a1e, doorCol: 0x243a6a, lit: 0.9, winW: 1.3, winH: 1.5, chimney: false, mullion: true, ...o });
-  edo(-6, 222, Math.PI, 15, 8.5, 4.2);
+  const edo = (x, z, ry, w, d, h, o = {}) => {
+    // the box house these used to be still throws its dice (into a builder that is thrown away),
+    // so that everything random built after it stays exactly where it was
+    house(new Builder(), { heightAt: H }, { R, x, z, ry, w, d, h, roofType: 'hip', roofH: 2.6, over: 1.1, ridge: 0.5, wall: 0xe9dfc6, roof: 0x3d4c5c, trim: 0x3a2a1e, doorCol: 0x243a6a, lit: 0.9, winW: 1.3, winH: 1.5, chimney: false, mullion: true, ...o });
+    const res = machiya(world.edoKit, world, { x, z, ry, w, d, R: rngAt(x, z), shop: true, floors: 2, ...(o.edo ?? {}) });
+    world.colliders.push({ x, z, hw: w / 2 + 0.3, hd: d / 2 + 0.3, ry, top: H(x, z) + res.top });
+    maps.blob(x, z, Math.max(w, d) * 0.95, 0.4);
+  };
+  edo(-6, 222, Math.PI, 15, 8.5, 4.2, { edo: { cloth: 0x1f3f7a } });
   edo(24, 232, Math.PI + 0.3, 8, 6.5, 3.8, { roof: 0x4a5560 });
   edo(-38, 236, Math.PI - 0.25, 9, 6.5, 3.8, { roof: 0x35455a });
   edo(50, 246, Math.PI + 0.5, 7, 6, 3.6, { roof: 0x4a4a55, lit: 0.6 });
   // timber frame and porch on the workshop
   {
     const y = H(-6, 222);
-    for (let i = -3; i <= 3; i++) B.box(0.22, 4.2, 0.22, 0x3a2a1e, -6 + i * 2.5, y - 0.3, 217.6);
+    // the boarded forecourt in front of the shop (the house brings its own posts, pent roof and curtain)
     B.box(16, 0.3, 2.6, 0x8a6a48, -6, y + 0.2, 216.4);
-    for (let i = -3; i <= 3; i++) B.box(0.18, 2.9, 0.18, 0x3a2a1e, -6 + i * 2.5, y + 0.2, 215.3);
-    B.box(16.6, 0.2, 3.2, 0x3d4c5c, -6, y + 3.1, 216.2);
-    // noren over the door
-    for (let i = -1; i <= 1; i++) B.box(0.62, 0.9, 0.05, 0x1f3f7a, -6 + i * 0.68, y + 1.9, 217.5, 0, { sway: 0.06 });
     world.platforms.push({ minx: -14, maxx: 2, minz: 215.1, maxz: 217.7, y: y + 0.5 });
   }
   // the day's prints hung out to dry

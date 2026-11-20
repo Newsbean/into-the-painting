@@ -31,14 +31,14 @@ export function addFuji(world, { S, flat }) {
 }
 
 // --- bands of printed mist lying across the distance
-export function addMist(world, { R, X }) {
+export function addMist(world, { R, X, SPARE }) {
   for (let i = 0; i < 22; i++) {
     const far = i < 9;
     const x = far ? -260 + R() * 620 : (R() - 0.5) * 900,
       z = far ? -420 - R() * 520 : i < 15 ? 340 + R() * 130 : -160 - R() * 200,
       y = far ? 16 + R() * 60 : i < 15 ? 30 + R() * 46 : 60 + R() * 30;
     const w = 50 + R() * 90;
-    X.ball(1, R() < 0.3 ? 0xf2d6c4 : 0xf6ecd4, x, y, z, w, 2.2 + R() * 2, 9 + R() * 8, 2, { emissive: 0.55 });
+    (far ? X : SPARE).ball(1, R() < 0.3 ? 0xf2d6c4 : 0xf6ecd4, x, y, z, w, 2.2 + R() * 2, 9 + R() * 8, 2, { emissive: 0.55 });
   }
 }
 

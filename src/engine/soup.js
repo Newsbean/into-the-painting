@@ -26,6 +26,7 @@ export class Soup {
     this.dat = [];
     this.m = null;
     this.bend = null;
+    this.away = null;
   }
   get triangles() {
     return this.pos.length / 9;
@@ -39,6 +40,19 @@ export class Soup {
   warp(fn = null) {
     this.bend = fn;
     return this;
+  }
+  // Every face that follows is turned to look away from this point (given in the same local
+  // space as the faces): the middle of a building for its walls, a point far below a roof
+  // for its slopes. Saves working out which way round each face goes. null = as given.
+  facing(p = null) {
+    this.away = p;
+    return this;
+  }
+  _where(p) {
+    const q = this.bend ? this.bend(p) : p;
+    if (!this.m) return q;
+    _v.set(q[0], q[1], q[2]).applyMatrix4(this.m);
+    return [_v.x, _v.y, _v.z];
   }
   _put(p) {
     const q = this.bend ? this.bend(p) : p;
@@ -73,10 +87,26 @@ export class Soup {
     nx /= l;
     ny /= l;
     nz /= l;
+    let order = [a, b, c];
+    if (this.away) {
+      const w = this._where(this.away);
+      if (nx * ((A[0] + B[0] + C[0]) / 3 - w[0]) + ny * ((A[1] + B[1] + C[1]) / 3 - w[1]) + nz * ((A[2] + B[2] + C[2]) / 3 - w[2]) < 0) {
+        nx = -nx;
+        ny = -ny;
+        nz = -nz;
+        const n = this.pos.length;
+        for (let k = 0; k < 3; k++) {
+          const t = this.pos[n - 6 + k];
+          this.pos[n - 6 + k] = this.pos[n - 3 + k];
+          this.pos[n - 3 + k] = t;
+        }
+        order = [a, c, b];
+      }
+    }
     const em = o?.em ?? 0,
       sway = o?.sway ?? 0,
       mask = o?.mask ?? 0;
-    for (const p of [a, b, c]) {
+    for (const p of order) {
       const k = this._color(col, p);
       this.nor.push(nx, ny, nz);
       this.col.push(k.r, k.g, k.b);

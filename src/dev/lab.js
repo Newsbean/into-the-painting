@@ -40,6 +40,20 @@ const LOOKS = {
     ground: (x, z) => mix(0x1f5a4a, 0x235f72, vnoise(x * 0.05, z * 0.05)),
     cobble: (x, z) => mix(0x6c5fa6, 0xa57cb6, vnoise(x * 0.35, z * 0.35)).lerp(new THREE.Color(0x4a5cae), vnoise(x * 0.11 + 7, z * 0.11) * 0.5),
   },
+  // the Great Wave: daylight on paper, flat colour, strong outlines   (&look=wave)
+  wave: {
+    env: { sunDir: new THREE.Vector3(0.45, 0.7, 0.5), sunColor: 0x4a4a48, skyColor: 0xc9c6bc, groundColor: 0x9a968c, fogColor: 0x7a858c, fog: [0.001, 0, 0.0, 0.5], paper: 0xf0e7d0, ink: 0x35405a, rim: 0x6fb0e0, lamp: 0.9, sway: 0.15 },
+    style: { kuwahara: 0.6, outline: 0.92, sketchLine: 0.1, ink: 0x14244a, bloom: 0.25, threshold: 1.1, grain: 0.03, paper: 0.13, saturation: 1.02, contrast: 1.04, vignette: 0.32, tint: [1.0, 0.985, 0.95] },
+    sky: /* glsl */ `
+      vec3 skyColor(vec3 d){
+        float h = clamp(d.y, -0.2, 1.0);
+        vec3 c = mix(vec3(0.93, 0.89, 0.78), vec3(0.60, 0.69, 0.76), smoothstep(0.05, 0.9, h));
+        return mix(uPaper * 0.97, c, uSkyRestore);
+      }`,
+    ground: (x, z) => mix(0x8faa7a, 0xa8b888, vnoise(x * 0.05, z * 0.05)),
+    cobble: (x, z) => mix(0xd8cba8, 0xc9bb94, vnoise(x * 0.3, z * 0.3)),
+    groundMat: (strokes) => paintMaterial({ stroke: strokes.wood, scale: 0.05, contrast: 0.14, hueVar: 0.1, warp: 0.05, flat: 0.72, rim: 0, band: 0.08, impasto: 0, big: 0 }),
+  },
 };
 
 export async function runLab(game, ui, path, params) {
@@ -72,13 +86,13 @@ export async function runLab(game, ui, path, params) {
       this.scene.add(this.sky.mesh);
       const ground = new THREE.Mesh(
         terrain(H, 300, 60, (x, z) => look.ground(x, z)),
-        paintMaterial({ stroke: strokes.oil, scale: 0.052, contrast: 0.55, hueVar: 0.75, warp: 0.85, accent: 0xb9c95a, accentAmt: 0.3, impasto: 0.1, rim: 0.05, band: 0.3 })
+        look.groundMat ? look.groundMat(strokes) : paintMaterial({ stroke: strokes.oil, scale: 0.052, contrast: 0.55, hueVar: 0.75, warp: 0.85, accent: 0xb9c95a, accentAmt: 0.3, impasto: 0.1, rim: 0.05, band: 0.3 })
       );
       this.scene.add(ground);
       if (!params.has('bare')) {
         const cb = new Builder();
         cb.parts.push(patch(0, 0, 46, H, (x, y, z) => look.cobble(x, z), { lift: 0.04, wobble: 0.03 }));
-        this.scene.add(cb.mesh(paintMaterial({ stroke: strokes.dab, scale: 0.2, contrast: 0.62, hueVar: 0.9, warp: 0.1, accent: 0xf0b6c8, accentAmt: 0.35, impasto: 0.14, rim: 0.05, band: 0.3 })));
+        this.scene.add(cb.mesh(look.groundMat ? look.groundMat(strokes) : paintMaterial({ stroke: strokes.dab, scale: 0.2, contrast: 0.62, hueVar: 0.9, warp: 0.1, accent: 0xf0b6c8, accentAmt: 0.35, impasto: 0.14, rim: 0.05, band: 0.3 })));
       }
       info = fn(this, { params }) || {};
       if (this.glows.length) this.scene.add(glowPoints(this.glows, 1));

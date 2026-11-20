@@ -1,8 +1,9 @@
 import * as THREE from 'three';
-import { house, figure, blobTree, mix, xf } from '../../engine/build.js';
+import { Builder, house, figure, blobTree, mix, xf } from '../../engine/build.js';
 import { clamp } from '../../engine/gl.js';
 import { FOAM, VERMILION } from './palette.js';
 import { keptClear } from './ground-plan.js';
+import { machiya, minka, pagoda, rngAt } from './edo/house.js';
 
 // The fishing village behind the workshop: its houses and lanterns, the
 // pagoda, the cooper at his barrel, the kites and the cherry trees.
@@ -12,11 +13,21 @@ export function addFishingVillage(world, { R, H, maps, proxy, X }) {
   const lots = [[-70, 228], [-94, 238], [-118, 231], [74, 238], [98, 229], [122, 240], [146, 232], [-58, 252], [86, 256], [18, 256], [-22, 250], [-146, 240], [170, 244], [-98, 262], [120, 264]];
   for (const [x, z] of lots) {
     if (H(x, z) < 1.3) continue;
-    house(X, proxy, {
-      R, x, z, ry: Math.PI + (R() - 0.5) * 0.7, w: 7 + R() * 4, d: 5.5 + R() * 2, h: 3.5 + R() * 0.8,
+    const ry = Math.PI + (R() - 0.5) * 0.7,
+      w = 7 + R() * 4,
+      d = 5.5 + R() * 2;
+    // the box house this used to be still throws its dice (into a builder that is thrown away),
+    // so that everything random built after it stays exactly where it was
+    house(new Builder(), { heightAt: H }, {
+      R, x, z, ry, w, d, h: 3.5 + R() * 0.8,
       roofType: 'hip', roofH: 2.3, over: 1.0, ridge: 0.5, wall: R() < 0.5 ? 0xe9dfc6 : 0xcdbb98, roof: [0x3d4c5c, 0x4a5560, 0x55504a, 0x35455a][(R() * 4) | 0],
       trim: 0x3a2a1e, doorCol: [0x243a6a, 0x7a2f2a, 0x3a2a1e][(R() * 3) | 0], lit: 0.85, winW: 1.3, winH: 1.4, chimney: false,
     });
+    // down by the road, shops and fishermen's houses under tile; higher up, thatch
+    const Q = rngAt(x, z);
+    const res = z > 246 ? minka(world.edoKit, world, { x, z, ry, w, d, y: H(x, z) + 0.15, lo: H(x, z) - 0.9 }) : machiya(world.edoKit, world, { x, z, ry, w, d, R: Q, shop: Q() < 0.5, floors: Q() < 0.45 ? 2 : 1 });
+    world.colliders.push({ x, z, hw: w / 2 + 0.3, hd: d / 2 + 0.3, ry, top: z > 246 ? res.top : H(x, z) + res.top });
+    maps.blob(x, z, Math.max(w, d) * 0.95, 0.4);
     // a paper lantern by every door
     const lx = x + (R() - 0.5) * 3,
       lz = z - 5;
@@ -32,16 +43,7 @@ export function addPagoda(world, { H, maps, X }) {
   const px = -78,
     pz = 276,
     y = H(px, pz);
-  for (let i = 0; i < 3; i++) {
-    const w = 7.4 - i * 1.5,
-      by = y + i * 4.5;
-    X.box(w, 3.3, w, 0xe9dfc6, px, by, pz);
-    for (const [ox, oz] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) X.box(0.36, 3.3, 0.36, VERMILION, px + (ox * w) / 2, by, pz + (oz * w) / 2);
-    X.box(w + 0.5, 0.3, w + 0.5, VERMILION, px, by + 3.3, pz);
-    X.hip(w + 4.2, w + 4.2, 1.5, 0x35424f, px, by + 3.5, pz, 0, undefined, undefined, 0);
-    X.box(1.5, 1.2, 0.1, 0xffd58a, px, by + 1.2, pz - w / 2 - 0.04, 0, { emissive: 0.9 });
-  }
-  X.cyl(0.05, 0.22, 5, 0xd9a93a, px, y + 14.6, pz, 6);
+  pagoda(world.edoKit, world, { x: px, z: pz, tiers: 3 });
   world.colliders.push({ x: px, z: pz, hw: 4, hd: 4, ry: 0, top: y + 15 });
   world.glows.push({ p: [px, y + 19.6, pz], c: 0xffd58a, size: 2 });
   maps.blob(px, pz, 9, 0.4);

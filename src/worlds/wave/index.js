@@ -12,6 +12,8 @@ import { addShore, addShorePines } from './shore.js';
 import { addFishingVillage, addPagoda, addCooper, addKites, addCherryTrees } from './village.js';
 import { buildPrints, blowPapers } from './prints/index.js';
 import { addStory } from './story.js';
+import { EdoKit, edoMaterials } from './edo/kit.js';
+import { addEdoTown, edoWeight, edoLevel, CASTLE } from './edo/town.js';
 
 // The Great Wave. This file is the world itself: its look, where you stand, the
 // lie of the land, and the order its parts are built in. The parts are in the
@@ -25,10 +27,24 @@ import { addStory } from './story.js';
 //   village.js      the fishing village, pagoda, cooper, kites, cherry trees
 //   prints/         the land behind: Hokusai's other prints, one to a file
 //   story.js        the wisps, the memento, Hokusai, what the curator says
+//   edo/            the Edo kit (merchant houses, storehouses, farmhouses, pagoda, castle)
+//                   and the town of Edo at the west end of the coast road
 //
 //   palette.js, ground-plan.js, helpers.js, figures.js, plants.js
 //                   the colours, the routes and kept ground, and the small
 //                   pieces (timbers, people, trees) the parts are made from
+
+// the lie of the land before the castle's mound is raised on it
+function baseHeight(x, z) {
+  const edge = z + (fbm(x * 0.018, 3.3, 2) - 0.5) * 34;
+  const shore = smooth(170, 200, edge);
+  let h = -7 + shore * 8.4 + smooth(205, 330, edge) * 34 * (0.4 + fbm(x * 0.008 + 5, z * 0.008, 3));
+  // Edo stands on level ground at the west end of the coast road
+  const ew = edoWeight(x, z);
+  if (ew > 0) h = lerp(h, edoLevel(x, z), ew);
+  return h;
+}
+let castleY;
 
 export class WaveWorld extends World {
   constructor(ctx) {
@@ -39,9 +55,9 @@ export class WaveWorld extends World {
     this.title = 'The Great Wave';
     this.sub = 'Katsushika Hokusai';
     this.aspect = 37.9 / 25.7;
-    this.extent = 280;
-    this.boundary = 290;
-    this.center = { x: 0, z: 60 };
+    this.extent = 470;
+    this.boundary = 400;
+    this.center = { x: -60, z: 90 };
     this.ceiling = 105;
     this.waterY = 0;
     this.env = {
@@ -65,9 +81,11 @@ export class WaveWorld extends World {
   }
 
   heightAt(x, z) {
-    const edge = z + (fbm(x * 0.018, 3.3, 2) - 0.5) * 34;
-    const shore = smooth(170, 200, edge);
-    return -7 + shore * 8.4 + smooth(205, 330, edge) * 34 * (0.4 + fbm(x * 0.008 + 5, z * 0.008, 3));
+    let h = baseHeight(x, z);
+    // the castle stands on a levelled mound behind the town
+    const cm = 1 - smooth(20, 46, Math.hypot(x - CASTLE.x, z - CASTLE.z));
+    if (cm > 0) h = lerp(h, (castleY ??= baseHeight(CASTLE.x, CASTLE.z) + 1.5), cm);
+    return h;
   }
 
   build() {
@@ -75,7 +93,7 @@ export class WaveWorld extends World {
     const R = rng(1831);
     const S = this.scene;
     const H = (x, z) => this.heightAt(x, z);
-    const maps = (this.maps = new GroundMaps(this.extent, H));
+    const maps = (this.maps = new GroundMaps(this.extent, H, 2048));
 
     const flat = (o = {}) => paintMaterial({ stroke: strokes.wood, scale: 0.05, contrast: 0.14, hueVar: 0.1, warp: 0.05, flat: 0.72, rim: 0, band: 0.08, impasto: 0, big: 0, ...o });
 
@@ -90,6 +108,8 @@ export class WaveWorld extends World {
     const X = new Builder(); // more things made of wood, stone and paper
     const T2 = new Builder(); // more things that grow
     const kit = { strokes, noise3, R, S, H, maps, flat, proxy, SPARE, X, T2 };
+    // everything built in the Edo manner goes through this kit (edo/); it is baked after the prints
+    this.edoKit = new EdoKit(edoMaterials(strokes));
 
     addSky(this, kit);
     addSea(this, kit);
@@ -121,6 +141,10 @@ export class WaveWorld extends World {
     addCoastLights(this, kit);
     // the land behind the wave: scenes from the other prints
     buildPrints(this, kit);
+    // Edo itself, at the west end of the coast road
+    this.edo = addEdoTown(this, kit);
+    const eb = this.edoKit.build();
+    S.add(eb.base, eb.detail);
     S.add(glowPoints(this.glows, 1));
     maps.finish();
 
@@ -142,7 +166,8 @@ export class WaveWorld extends World {
     this.applyRise(this.thumbMode ? 1 : v);
   }
 
-  tick(dt, time) {
+  tick(dt, time, player, game) {
+    if (game) this.edo?.tick(game.camera.position);
     this.applyRise(this.thumbMode ? 1 : smooth(0.05, 1, this.final));
     // the sea stays pale until the final block is printed
     this.seaMat.uniforms.uDeep.value.copy(this.seaPale).lerp(this.seaDeep, this.final);
