@@ -234,17 +234,44 @@ function paintPlanks(ctx, size, r) {
   }
 }
 
+// loose strokes dragged over the finished surface, so no block, tile or sett is a flat
+// patch when you walk right up to it. dir = which way the brush mostly travels.
+function glaze(ctx, size, r, { n = 900, alpha = 0.26, dir = 0, spread = 0.35, len = [30, 110], w = [5, 17] } = {}) {
+  ctx.save();
+  ctx.globalAlpha = alpha;
+  ctx.lineCap = 'round';
+  for (let i = 0; i < n; i++) {
+    const x = r() * size,
+      y = r() * size;
+    const l = lerp(len[0], len[1], r()),
+      ang = dir + (r() - 0.5) * 2 * spread;
+    const dx = (Math.cos(ang) * l) / 2,
+      dy = (Math.sin(ang) * l) / 2;
+    ctx.strokeStyle = px(0.5 + (r() - 0.5) * 0.56, r(), 0.3 + r() * 0.65);
+    ctx.lineWidth = lerp(w[0], w[1], r());
+    for (const ox of [-size, 0, size])
+      for (const oy of [-size, 0, size]) {
+        if (x + ox < -l || x + ox > size + l || y + oy < -l || y + oy > size + l) continue;
+        ctx.beginPath();
+        ctx.moveTo(x + ox - dx, y + oy - dy);
+        ctx.lineTo(x + ox + dx, y + oy + dy);
+        ctx.stroke();
+      }
+  }
+  ctx.restore();
+}
+
 export const BUILT = {
   // limestone in rough courses: farm and town walls
-  masonry: (c, n, r) => paintMasonry(c, n, r, { courses: 16, lo: 70, hi: 190 }),
+  masonry: (c, n, r) => (paintMasonry(c, n, r, { courses: 16, lo: 70, hi: 190 }), glaze(c, n, r, { n: 1000 })),
   // big dressed blocks: churches, quays, the town hall
-  ashlar: (c, n, r) => paintMasonry(c, n, r, { courses: 9, lo: 150, hi: 260, joint: 4, wander: 1.2, round: 3, vary: 0.2, marks: 4 }),
-  brick: (c, n, r) => paintMasonry(c, n, r, { courses: 24, lo: 118, hi: 138, joint: 4, bond: 64, wander: 1.1, round: 2.5, vary: 0.24, marks: 2 }),
+  ashlar: (c, n, r) => (paintMasonry(c, n, r, { courses: 9, lo: 150, hi: 260, joint: 4, wander: 1.2, round: 3, vary: 0.2, marks: 4 }), glaze(c, n, r, { n: 800, alpha: 0.22 })),
+  brick: (c, n, r) => (paintMasonry(c, n, r, { courses: 24, lo: 118, hi: 138, joint: 4, bond: 64, wander: 1.1, round: 2.5, vary: 0.24, marks: 2 }), glaze(c, n, r, { n: 900, alpha: 0.22, len: [24, 80], w: [4, 12] })),
   // clay tiles in rows, and round slates
-  tiles: (c, n, r) => paintTiles(c, n, r, { rows: 8, across: 16, scallop: 0.45, barrel: 1 }),
-  slate: (c, n, r) => paintTiles(c, n, r, { rows: 10, across: 10, scallop: 1, barrel: 0, vary: 0.24, seed: 4000 }),
-  cobble: (c, n, r) => paintCobbles(c, n, r, { n: 14 }),
-  plank: (c, n, r) => paintPlanks(c, n, r),
+  tiles: (c, n, r) => (paintTiles(c, n, r, { rows: 8, across: 16, scallop: 0.45, barrel: 1 }), glaze(c, n, r, { n: 800, alpha: 0.24, dir: Math.PI / 2, spread: 0.3 })),
+  slate: (c, n, r) => (paintTiles(c, n, r, { rows: 10, across: 10, scallop: 1, barrel: 0, vary: 0.24, seed: 4000 }), glaze(c, n, r, { n: 900, alpha: 0.26, dir: Math.PI / 2, spread: 0.45 })),
+  cobble: (c, n, r) => (paintCobbles(c, n, r, { n: 14 }), glaze(c, n, r, { n: 700, alpha: 0.2, spread: 3.2, len: [18, 60], w: [5, 14] })),
+  plank: (c, n, r) => (paintPlanks(c, n, r), glaze(c, n, r, { n: 500, alpha: 0.2, dir: Math.PI / 2, spread: 0.12, len: [60, 200], w: [3, 9] })),
 };
 
 export function makeBuiltTexture(kind, renderer, size = 1024, seed = 71) {

@@ -19,7 +19,7 @@ export function townMaterials(strokes) {
     tile: built(strokes.tiles, { scale: 0.25, contrast: 0.62, hueVar: 0.55, impasto: 0.2, rim: 0.1, big: 0.75 }),
     slate: built(strokes.slate, { scale: 0.3, contrast: 0.58, hueVar: 0.5, impasto: 0.2, rim: 0.1, big: 0.75 }),
     // dressings, joinery, iron, glass: colour comes from the faces themselves
-    detail: built(strokes.oil, { scale: 0.42, contrast: 0.3, hueVar: 0.22, impasto: 0.08, big: 0, emissive: 1.75 }),
+    detail: built(strokes.oil, { scale: 0.42, contrast: 0.3, hueVar: 0.22, impasto: 0.08, big: 0, emissive: 1.38 }),
     wood: built(strokes.plank, { scale: 0.8, contrast: 0.4, hueVar: 0.28, big: 0 }),
     cobble: paintMaterial({ stroke: strokes.cobble, scale: 0.25, contrast: 0.6, hueVar: 0.85, warp: 0, accent: 0xf0b6c8, accentAmt: 0.3, impasto: 0.18, rim: 0.05, band: 0.3, big: 0.35 }),
   };

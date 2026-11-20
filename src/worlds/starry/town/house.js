@@ -320,7 +320,7 @@ export function house(kit, world, o) {
     world.maps?.lamp(g.x, g.z, op.kind === 'shop' ? 6.5 : 3.2, 0xffc46a, op.kind === 'shop' ? 0.8 : 0.4);
     if (op.kind === 'shop') {
       const p = toWorld(F.front.o[0] + (op.x0 + op.x1) / 2, 1.6, d / 2 + 0.2);
-      world.glows?.push({ p: [p.x, p.y, p.z], c: 0xffc46a, size: 2.8 });
+      world.glows?.push({ p: [p.x, p.y, p.z], c: 0xffc46a, size: 1.7 });
     }
   }
 

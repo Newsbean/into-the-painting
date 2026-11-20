@@ -318,6 +318,79 @@ function lanternPart() {
   return S.geometry();
 }
 
+// ---------------------------------------------------------------- street lamp
+// real metres; origin at the foot of the post. A gas lamp: stepped base, slim shaft,
+// the ladder bar, four panes of glass under a little roof.
+function lampPostPart() {
+  const S = new Soup();
+  const cyl = (rt, rb, h, y, col, seg = 8, o) => S.add(new THREE.CylinderGeometry(rt, rb, h, seg), col, new THREE.Matrix4().makeTranslation(0, y + h / 2, 0), o);
+  cyl(0.2, 0.25, 0.22, -0.3, IRON, 8); // sunk a little, for sloping streets
+  cyl(0.2, 0.25, 0.3, -0.08, IRON, 8);
+  cyl(0.13, 0.19, 0.5, 0.22, IRON, 8);
+  cyl(0.075, 0.1, 0.16, 0.72, 0x2a3048, 8);
+  cyl(0.055, 0.075, 2.5, 0.88, IRON, 7);
+  cyl(0.085, 0.06, 0.12, 3.38, 0x2a3048, 8);
+  // the bar the lamplighter leans his ladder on
+  cuboid(S, [-0.34, 3.2, -0.02], [0.34, 3.24, 0.02], IRON, undefined, '');
+  const y0 = 3.5,
+    y1 = 4.02,
+    a = 0.13,
+    b = 0.22;
+  const ring = (r, y) => [
+    [-r, y, -r],
+    [r, y, -r],
+    [r, y, r],
+    [-r, y, r],
+  ];
+  const lo = ring(a, y0),
+    hi = ring(b, y1);
+  for (let i = 0; i < 4; i++) {
+    const j = (i + 1) % 4;
+    S.quad(lo[j], lo[i], hi[i], hi[j], 0xffd27a, { em: 1 });
+  }
+  // glazing bars at the corners
+  for (let i = 0; i < 4; i++) {
+    const p = lo[i],
+      q = hi[i];
+    const k = 1.06;
+    S.quad([p[0] * k - 0.012, p[1], p[2] * k], [p[0] * k + 0.012, p[1], p[2] * k], [q[0] * k + 0.012, q[1], q[2] * k], [q[0] * k - 0.012, q[1], q[2] * k], IRON);
+    S.quad([p[0] * k + 0.012, p[1], p[2] * k], [p[0] * k - 0.012, p[1], p[2] * k], [q[0] * k - 0.012, q[1], q[2] * k], [q[0] * k + 0.012, q[1], q[2] * k], IRON);
+  }
+  const cap = ring(b + 0.05, y1);
+  for (let i = 0; i < 4; i++) {
+    const j = (i + 1) % 4;
+    S.tri(cap[j], cap[i], [0, y1 + 0.26, 0], IRON);
+  }
+  S.quad(cap[0], cap[1], cap[2], cap[3], IRON); // underside of the cap
+  cyl(0.02, 0.035, 0.2, y1 + 0.24, IRON, 5);
+  cuboid(S, [-a, y0 - 0.05, -a], [a, y0, a], IRON, undefined, '');
+  return S.geometry();
+}
+
+// ---------------------------------------------------------------- a string of lights
+// unit length along x (the house stretches it across the street), hanging in a shallow curve
+function bulbsPart() {
+  const S = new Soup();
+  const N = 11;
+  const sagAt = (u) => -0.9 * 4 * u * (1 - u);
+  const cols = [0xffd27a, 0xff9a4a, 0xffe6a3, 0xff7a5a, 0xffc861, 0xa8e0ff];
+  const bulb = new THREE.OctahedronGeometry(1, 0);
+  for (let i = 0; i < 24; i++) {
+    const u0 = i / 24,
+      u1 = (i + 1) / 24;
+    const a = [u0, sagAt(u0), 0],
+      b = [u1, sagAt(u1), 0];
+    S.quad([a[0], a[1] - 0.012, 0], [b[0], b[1] - 0.012, 0], [b[0], b[1] + 0.012, 0], [a[0], a[1] + 0.012, 0], IRON);
+    S.quad([b[0], b[1] - 0.012, 0], [a[0], a[1] - 0.012, 0], [a[0], a[1] + 0.012, 0], [b[0], b[1] + 0.012, 0], IRON);
+  }
+  for (let i = 1; i < N; i++) {
+    const u = i / N;
+    // x is stretched by the span (about 14 m), so the bulb is squeezed along x here to come out round
+    S.add(bulb, cols[i % cols.length], new THREE.Matrix4().compose(new THREE.Vector3(u, sagAt(u) - 0.13, 0), new THREE.Quaternion(), new THREE.Vector3(0.11 / 14, 0.14, 0.11)), { em: 1, sway: 0.04 });
+  }
+  return S.geometry();
+}
+
 // ---------------------------------------------------------------- the library
 // name -> { geometry, nominal: [W, H] }.  The house stretches a part from its nominal opening to the real one.
 export function makeParts() {
@@ -332,5 +405,7 @@ export function makeParts() {
     shop: { geometry: shopPart(), nominal: [3.0, 2.75] },
     shopBare: { geometry: shopPart({ awning: false }), nominal: [3.0, 2.75] },
     lantern: { geometry: lanternPart(), nominal: [1, 1] },
+    lampPost: { geometry: lampPostPart(), nominal: [1, 1] },
+    bulbs: { geometry: bulbsPart(), nominal: [1, 1] },
   };
 }
