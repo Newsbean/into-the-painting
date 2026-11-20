@@ -1,0 +1,10 @@
+node_modules
+dist
+# frames, previews and audio written by the film recorder (src/dev/film.js)
+capture
+# generation logs and rejected / full-size source models (not needed to build)
+refs
+*.log
+.vercel
+.DS_Store
+Thumbs.db

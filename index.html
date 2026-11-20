@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Into the Painting</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Jost:wght@300;400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/src/style.css" />
+  </head>
+  <body>
+    <canvas id="stage"></canvas>
+
+    <!-- colour wash used for every transition -->
+    <div id="fade"></div>
+
+    <!-- the finished picture: a gilt window in the painting's own shape -->
+    <div id="matte">
+      <i></i>
+      <div id="plaque"><b id="plaque-title"></b><span id="plaque-sub"></span></div>
+    </div>
+
+    <!-- loading -->
+    <div id="loading" class="screen">
+      <div class="loading-inner">
+        <div class="loading-title">Into the Painting</div>
+        <div class="loading-bar"><i id="loading-fill"></i></div>
+        <div id="loading-text" class="loading-text">Stretching the canvas…</div>
+      </div>
+    </div>
+
+    <!-- title -->
+    <div id="title" class="screen hidden">
+      <div class="title-inner">
+        <div class="title-kicker">A walk through five masterpieces</div>
+        <h1>Into the Painting</h1>
+        <p class="title-sub">
+          A storm has washed the colour out of the gallery.<br />Step through the frames and paint the world back to
+          life.
+        </p>
+        <button id="begin">Step inside</button>
+        <div class="title-keys">
+          <span><b>W A S D</b> walk</span>
+          <span><b>Mouse</b> look</span>
+          <span><b>Space</b> ride the wind</span>
+          <span><b>Shift</b> hurry</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- in-game hud -->
+    <div id="hud" class="hidden">
+      <div id="chapter">
+        <div id="chapter-name"></div>
+        <div id="pigments"></div>
+        <div id="objective"></div>
+      </div>
+
+      <div id="card">
+        <div id="card-kicker"></div>
+        <div id="card-title"></div>
+        <div id="card-sub"></div>
+      </div>
+
+      <div id="caption">
+        <div id="caption-who"></div>
+        <div id="caption-text"></div>
+      </div>
+
+      <div id="fact">
+        <div id="fact-label">Sketchbook</div>
+        <div id="fact-text"></div>
+      </div>
+
+      <div id="prompt"></div>
+      <div id="markers"></div>
+
+      <div id="keys">
+        <span><b>W A S D</b> walk</span>
+        <span><b>Mouse</b> look</span>
+        <span><b>Space</b> ride the wind</span>
+        <span><b>Shift</b> hurry</span>
+        <span><b>M</b> sound</span>
+      </div>
+
+      <div id="resume">Click to look around</div>
+    </div>
+
+    <!-- ending -->
+    <div id="ending" class="screen hidden">
+      <div class="ending-inner">
+        <div class="title-kicker">Sunrise</div>
+        <h2>The museum opens.</h2>
+        <p>
+          Visitors walk past five paintings without knowing anything happened.<br />
+          In the gift shop a sixth frame hangs empty, and beneath it leans a canvas<br />
+          that Mira started before she went home.
+        </p>
+        <p class="ending-quote">They were never famous for being perfect. Their makers simply kept going.</p>
+        <button id="again">Wander the paintings again</button>
+      </div>
+    </div>
+
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>

@@ -1,0 +1,6 @@
+refs
+.claude
+dist
+node_modules
+*.log
+capture

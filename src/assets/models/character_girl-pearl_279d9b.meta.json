@@ -1,0 +1,56 @@
+{
+  "key": "girl_pearl",
+  "kind": "character",
+  "provider": "seed3d",
+  "model": "doubao-seed3d-2-0-260328",
+  "prompt": "the girl from Vermeer's Girl with a Pearl Earring, full standing figure",
+  "negative": null,
+  "seed": null,
+  "face_limit": 40000,
+  "face_count": null,
+  "file_size_bytes": 13086128,
+  "optimization": {
+    "applied": true,
+    "before_bytes": 27384000,
+    "after_bytes": 13086128,
+    "texture_size": 2048,
+    "texture_format": "jpeg",
+    "quantize": true
+  },
+  "texture": true,
+  "pbr": true,
+  "rigged": false,
+  "rig_type": null,
+  "t_pose": false,
+  "animations": [],
+  "rig_fallback": null,
+  "stage_history": [
+    {
+      "stage": "image_to_model",
+      "task_id": "cgt-20261120170935-5lvdz",
+      "status": "success"
+    }
+  ],
+  "mesh_task_id": "cgt-20261120170935-5lvdz",
+  "rig_task_id": null,
+  "final_task_id": "cgt-20261120170935-5lvdz",
+  "base_url": "https://ark.cn-beijing.volces.com/api/v3",
+  "original_prompt": "the girl from Vermeer's Girl with a Pearl Earring, full standing figure",
+  "effective_prompt": "the girl from Vermeer's Girl with a Pearl Earring, full standing figure",
+  "prompt_was_rewritten": false,
+  "original_negative": null,
+  "effective_negative": null,
+  "input_mode": "image_to_model",
+  "image_hash": null,
+  "image_url": "https://replicate.delivery/xezq/z0knRSY1YJbrLld9UFZZkPJ1BOsVP53zI5VdfTqfOzfQfvNeC/tmpqmg6mmsl.webp",
+  "multiview_hash": null,
+  "multiview_views": null,
+  "image_type": "webp",
+  "source_glb": null,
+  "glb_hash": null,
+  "reused_rig_task_id": null,
+  "auto_reference": {
+    "used": false
+  },
+  "generated_at": "2026-11-20T09:15:59.642Z"
+}
