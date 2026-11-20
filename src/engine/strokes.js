@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { rng, lerp } from './gl.js';
+import { BUILT, makeBuiltTexture } from './built.js';
 
 // Brush-stroke atlases, painted once on a 2D canvas at boot.
 //   R = value of the stroke (0.5 neutral)   -> lighter / darker dabs
@@ -117,15 +118,28 @@ export function makeStrokeTexture(style, renderer, size = 1024, seed = 11) {
   return t;
 }
 
+// Every atlas is painted the first time something asks for it, so a world only
+// pays for the brushes it uses. The built-surface atlases (masonry, ashlar,
+// brick, tiles, slate, cobble, plank) come from built.js.
 let cache = null;
 export function strokeSet(renderer) {
   if (cache) return cache;
-  cache = {
-    oil: makeStrokeTexture('oil', renderer, 1024, 11),
-    dab: makeStrokeTexture('dab', renderer, 1024, 23),
-    wavy: makeStrokeTexture('wavy', renderer, 1024, 37),
-    soft: makeStrokeTexture('soft', renderer, 1024, 41),
-    wood: makeStrokeTexture('wood', renderer, 1024, 53),
-  };
+  cache = {};
+  const lazy = (key, make) =>
+    Object.defineProperty(cache, key, {
+      configurable: true,
+      enumerable: true,
+      get() {
+        const t = make();
+        Object.defineProperty(cache, key, { value: t, enumerable: true });
+        return t;
+      },
+    });
+  lazy('oil', () => makeStrokeTexture('oil', renderer, 1024, 11));
+  lazy('dab', () => makeStrokeTexture('dab', renderer, 1024, 23));
+  lazy('wavy', () => makeStrokeTexture('wavy', renderer, 1024, 37));
+  lazy('soft', () => makeStrokeTexture('soft', renderer, 1024, 41));
+  lazy('wood', () => makeStrokeTexture('wood', renderer, 1024, 53));
+  Object.keys(BUILT).forEach((k, i) => lazy(k, () => makeBuiltTexture(k, renderer, 1024, 71 + i * 12)));
   return cache;
 }

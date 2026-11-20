@@ -314,6 +314,7 @@ export class World {
     G.uInk.value.set(e.ink ?? 0x3a3a40);
     G.uRimColor.value.set(e.rim ?? 0xffe08a);
     G.uLamp.value = e.lamp ?? 1;
+    G.uLampFall.value = e.lampFall ?? 0.16;
     G.uWobble.value = e.wobble ?? 0;
     G.uSway.value = e.sway ?? 0.25;
     this.maps?.apply();

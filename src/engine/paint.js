@@ -26,6 +26,7 @@ export const G = {
   uHeightMap: { value: null },
   uMapXf: { value: new THREE.Vector4(1 / 400, 1 / 400, 0.5, 0.5) },
   uLamp: { value: 1 },
+  uLampFall: { value: 0.16 }, // how fast lamplight fades with height above the ground
   uLantern: { value: new THREE.Vector4(0, 0, 0, 10) },
   uLanternColor: { value: new THREE.Color(1, 0.75, 0.4) },
   uWobble: { value: 0 },
@@ -70,6 +71,7 @@ uniform sampler2D uShadeMap;
 uniform sampler2D uHeightMap;
 uniform vec4 uMapXf;
 uniform float uLamp;
+uniform float uLampFall;
 uniform vec4 uLantern;
 uniform vec3 uLanternColor;
 
@@ -133,7 +135,18 @@ void main(){
   vUv = uv;
   vData = aData;
   vLocal = position;
-  vec4 wp = modelMatrix * vec4(position, 1.0);
+  vec4 lp = vec4(position, 1.0);
+  vec3 ln = normal;
+  // instanced pieces (windows, shutters, lamps): one geometry, many places
+  #ifdef USE_INSTANCING
+    lp = instanceMatrix * lp;
+    ln = mat3(instanceMatrix) * ln;
+  #endif
+  // aData.z marks the parts of an instance that take its own colour (shutters, doors, awnings)
+  #ifdef USE_INSTANCING_COLOR
+    vColor = mix(color, instanceColor, aData.z);
+  #endif
+  vec4 wp = modelMatrix * lp;
   float sw = aData.y;
   if (sw > 0.0){
     float ph = uTime * 1.3 + wp.x * 0.31 + wp.z * 0.27;
@@ -156,7 +169,7 @@ void main(){
     wp.y += c1 * uSurge.x * 0.5 * k + sin(uTime * uSurge.w * 0.6 + wp.x * 0.02) * uSurge.x * 0.22 * smoothstep(0.0, 5.0, wp.y);
   }
   vWorld = wp.xyz;
-  vNormal = normalize(mat3(modelMatrix) * normal);
+  vNormal = normalize(mat3(modelMatrix) * ln);
   gl_Position = projectionMatrix * viewMatrix * wp;
 }
 `;
@@ -181,6 +194,7 @@ uniform float uWallStretch;
 uniform float uWallVert;
 uniform float uBigScale;
 uniform float uBig;
+uniform float uDirected;
 uniform sampler2D uMap;
 uniform float uUseMap;
 uniform vec3 uTintColor;
@@ -203,16 +217,35 @@ vec3 strokesAt(vec3 p, vec3 w, float sc, vec2 warp){
   if (w.z > 0.01) s += texture2D(uStroke, wz * sc + warp * 0.4).rgb * w.z;
   return s;
 }
-// fine handwork up close, broad loaded strokes that still read from a hilltop
 vec3 strokes(vec3 p, vec3 n){
-  vec3 w = pow(abs(n), vec3(5.0));
-  w /= (w.x + w.y + w.z);
   vec2 warp = (texture2D(uNoise, p.xz * 0.00016).rg - 0.5) * uWarp;
-  vec3 s = strokesAt(p, w, uScale, warp);
-  if (uBig > 0.0){
-    vec3 b = strokesAt(p + 17.3, w, uScale * uBigScale, warp * uBigScale * 1.6);
-    s.rg += (b.rg - 0.5) * uBig;
-    s.b = mix(s.b, b.b, 0.4);
+  vec3 s = vec3(0.5);
+  if (uDirected > 0.5){
+    // built things: the stroke frame follows the face, so courses run level along a wall
+    // and along the eaves of a roof, whichever way the building is turned
+    float hl = length(n.xz);
+    vec2 t = hl > 0.001 ? vec2(n.z, -n.x) / hl : vec2(1.0, 0.0);
+    vec2 q = vec2(dot(p.xz, t), (p.y / max(hl, 0.3)) * uWallStretch);
+    float ca = cos(uAngle), sa = sin(uAngle);
+    q = vec2(q.x * ca - q.y * sa, q.x * sa + q.y * ca);
+    s = texture2D(uStroke, q * uScale + warp * 0.25).rgb;
+    float top = smoothstep(0.9, 0.985, abs(n.y));
+    if (top > 0.0) s = mix(s, texture2D(uStroke, p.xz * uScale + warp).rgb, top);
+    if (uBig > 0.0){
+      // a slow drift of tone over the whole wall, without a second copy of the pattern
+      vec2 b = texture2D(uNoise, q * 0.0085 * uBigScale + 0.37).rg;
+      s.rg += (b - 0.5) * uBig;
+    }
+  } else {
+    // fine handwork up close, broad loaded strokes that still read from a hilltop
+    vec3 w = pow(abs(n), vec3(5.0));
+    w /= (w.x + w.y + w.z);
+    s = strokesAt(p, w, uScale, warp);
+    if (uBig > 0.0){
+      vec3 b = strokesAt(p + 17.3, w, uScale * uBigScale, warp * uBigScale * 1.6);
+      s.rg += (b.rg - 0.5) * uBig;
+      s.b = mix(s.b, b.b, 0.4);
+    }
   }
   return s;
 }
@@ -251,7 +284,7 @@ void main(){
   float nz = (sv - 0.5) * 6.0 + (texture2D(uNoise, P.xz * 0.0011).r - 0.5) * 18.0;
   float restore = restoreAt(P, nz, rimW);
 
-  vec3 lamp = texture2D(uLightMap, muv).rgb * uLamp * exp(-above * 0.16);
+  vec3 lamp = texture2D(uLightMap, muv).rgb * uLamp * exp(-above * uLampFall);
   lamp *= 0.6 + 0.8 * sv;
   lamp /= 1.0 + luma(lamp) * 1.1;
   light += lamp * 0.7 * restore;
@@ -317,6 +350,7 @@ const paintDefaults = {
   wallVert: 0,
   bigScale: 0.23,
   big: 0.8,
+  directed: 0,
   map: null,
   tintColor: 0xffffff,
   surge: [0, 1, 0, 0.6],
@@ -350,6 +384,7 @@ export function paintMaterial(opts = {}) {
       uWallVert: { value: o.wallVert },
       uBigScale: { value: o.bigScale },
       uBig: { value: o.big },
+      uDirected: { value: o.directed },
       uMap: { value: o.map ?? G._white },
       uUseMap: { value: o.map ? 1 : 0 },
       uSurge: { value: new THREE.Vector4(...o.surge) },

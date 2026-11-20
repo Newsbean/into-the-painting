@@ -26,6 +26,12 @@ if (import.meta.env.DEV && params.has('film')) import('./dev/film.js').then((m) 
 
 (async () => {
   try {
+    // ?lab=<module under src> (dev server only): the asset lab, see src/dev/lab.js
+    if (import.meta.env.DEV && params.get('lab')) {
+      const { runLab } = await import('./dev/lab.js');
+      await runLab(game, ui, params.get('lab'), params);
+      return;
+    }
     if (only && WORLDS.some((w) => w.id === only)) {
       await game.init(await classes(WORLDS.filter((w) => w.id === only)), (p, t) => ui.loading(p, t), { thumbnails: false });
       game.run();
