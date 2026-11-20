@@ -22,7 +22,7 @@ export function buildTown(world, o) {
   const { streets, R, keep = [], inside = () => true, squares = [] } = o;
   const H = (x, z) => world.heightAt(x, z);
   const mats = o.mats ?? townMaterials(world.ctx.strokes);
-  const { lots, traces, inRoad } = layLots(streets, { R, keep, inside, ...(o.lots ?? {}) });
+  const { lots, traces, inRoad, occupied } = layLots(streets, { R, keep, inside, ...(o.lots ?? {}) });
 
   const chunks = new Map();
   const chunkOf = (x, z) => {
@@ -126,6 +126,8 @@ export function buildTown(world, o) {
     lots,
     traces,
     mats,
+    inRoad,
+    occupied, // (x, z, r): on a street or under a house? for planting courtyards and gardens
     stats: { houses: lots.length, lamps: nLamps, chunks: list.length, triangles: Math.round(tris) },
     // switch the fine detail on only where it can be seen
     tick(cam) {

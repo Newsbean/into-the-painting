@@ -156,5 +156,7 @@ export function layLots(streets, o) {
       }
     }
   });
-  return { lots, traces, inRoad };
+  // is this spot (a circle of radius r) on a street or under a house?
+  const occupied = (x, z, r = 1) => inRoad(x, z, r) || placed.any(x, z, 30, (ox, oz, lot) => overlap(lot, { x, z, ry: 0, w: 2 * r, d: 2 * r }));
+  return { lots, traces, inRoad, occupied };
 }
