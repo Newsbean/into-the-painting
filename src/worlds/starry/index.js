@@ -3,7 +3,8 @@ import { paintMaterial, GroundMaps } from '../../engine/paint.js';
 import { Builder } from '../../engine/build.js';
 import { rng } from '../../engine/gl.js';
 import { dirOf, sky } from './sky.js';
-import { heightAt, ways, ground, alpilles } from './terrain.js';
+import { heightAt, ways, ground, alpilles, CENTER } from './terrain.js';
+import { townMaterials } from './town/kit.js';
 import { village } from './village.js';
 import { trees, irises, wheat } from './nature.js';
 import { villagers } from './people.js';
@@ -18,7 +19,8 @@ import { vincent, flyCrows } from './vincent/index.js';
 //
 //   sky.js       the sky shader, its stars and vortices
 //   terrain.js   height of the land, canal and river, roads and footpaths, fields, the Alpilles
-//   village.js   houses, church, asylum, street lamps, the fountain
+//   village.js   the village, its church and the asylum, and the town across the river (built with town/)
+//   town/        the town kit: house generator, facade parts, planner, church, people
 //   nature.js    trees, irises, the wheat field
 //   people.js    person(), the villagers
 //   glow.js      fireflies, far villages, and every lamp drawn as a point of light
@@ -36,20 +38,24 @@ export class StarryWorld extends World {
     this.title = 'The Starry Night';
     this.sub = 'Vincent van Gogh';
     this.aspect = 92 / 73;
-    this.extent = 220;
-    this.boundary = 205;
-    this.ceiling = 95;
+    // the land: the village of the painting under the hill, the town across the river, and
+    // fields out to the foot of the Alpilles
+    this.extent = 580;
+    this.center = { x: CENTER[0], z: CENTER[1] };
+    this.boundary = 440;
+    this.ceiling = 130;
     this.env = {
       sunDir: dirOf(25, 34),
       sunColor: 0x66739e,
       skyColor: 0x7482bd,
       groundColor: 0x3d4272,
       fogColor: 0x2c4f9a,
-      fog: [0.0021, 4, 0.03, 0.8],
+      fog: [0.0013, 4, 0.03, 0.8],
       paper: 0xeee7d3,
       ink: 0x3d3f4f,
       rim: 0xffe27a,
       lamp: 1.1,
+      lampFall: 0.24, // street light stays in the street: it fades before it reaches the roofs
       sway: 0.3,
     };
     this.style = { kuwahara: 1.5, bloom: 0.55, threshold: 1.0, outline: 0.22, ink: 0x1a1d33, grain: 0.085, saturation: 1.16, contrast: 1.07, vignette: 0.6 };
@@ -67,7 +73,7 @@ export class StarryWorld extends World {
     const { strokes, noise3 } = this.ctx;
     const R = rng(1889);
     const S = this.scene;
-    const maps = (this.maps = new GroundMaps(this.extent, (x, z) => this.heightAt(x, z)));
+    const maps = (this.maps = new GroundMaps(this.extent, (x, z) => this.heightAt(x, z), 2048));
     const H = (x, z) => this.heightAt(x, z);
     const B = new Builder(); // walls + props
     const P = new Builder();
@@ -82,6 +88,7 @@ export class StarryWorld extends World {
       R, // the seeded dice of the village, the trees and the small things (vincent/ rolls its own)
       maps, // lamp light and contact shade painted on the ground
       strokes, // brush textures for the paint materials
+      mats: townMaterials(strokes), // the shared materials of everything built: walls, roofs, cobbles (town/kit.js)
       noise3, // noise for the sky
       B, // walls + props: one mesh, added to the scene at the end of build()
       P, // small things, likewise
@@ -120,7 +127,9 @@ export class StarryWorld extends World {
     story(this, kit);
   }
 
-  tick(dt, time) {
+  tick(dt, time, player, game) {
     flyCrows(this, time);
+    // the fine detail of the houses is only drawn near the camera
+    if (game) this.town?.tick(game.camera.position);
   }
 }

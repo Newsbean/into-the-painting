@@ -1,6 +1,7 @@
 import { ghostMaterial } from '../../engine/world.js';
 import { paintMaterial } from '../../engine/paint.js';
 import { Builder, figure } from '../../engine/build.js';
+import { FORUM } from './town/layout.js';
 
 // Vincent's easel in the garden
 export function easel(world, { H, P }) {
@@ -35,7 +36,7 @@ export function story(world, { H, strokes }) {
       { pos: world.cypressTop, color: 0xbfe6ff, name: 'Star white', fact: 'From his east-facing window he watched the sky before sunrise, night after night.', high: true },
     ],
     memento: {
-      pos: [16, 58, -20],
+      pos: [FORUM.x, H(FORUM.x, FORUM.z) + 46, FORUM.z], // high over the market square of the town across the river
       color: 0xfff0b8,
       model: pm,
       name: "Theo's letter and a parcel of paints",
@@ -57,7 +58,7 @@ export function story(world, { H, strokes }) {
   world.hints = {
     start: 'Something is glowing near the great cypress. Walk into it.',
     high: 'One colour is caught at the very top of the cypress. Hold Space to ride the wind.',
-    memento: "Theo's parcel is drifting high above the church. Fly up to it.",
+    memento: "Theo's parcel has blown over the river, high above the lights of the town. Fly to it.",
     echo: 'Carry it to Vincent in the asylum garden.',
   };
 }

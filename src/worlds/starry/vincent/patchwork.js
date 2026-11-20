@@ -1,6 +1,7 @@
 import { mix, jitter } from '../../../engine/build.js';
 import { vnoise, clamp, lerp } from '../../../engine/gl.js';
 import { riverAt } from '../terrain.js';
+import { townWeight } from '../town/layout.js';
 import { drape, hedge, fence, cart, farm } from '../helpers.js';
 
 // ---- the patchwork out to the hills: strips of colour, hedges, fences, haystacks, windbreaks and lit farms.
@@ -13,6 +14,7 @@ export function patchwork(world, { H, B, P, F, TR, GP, R, open, nearRoad, nearTr
     const rv = riverAt(x, z);
     return (
       inKeep(x, z, 15) ||
+      townWeight(x, z, 30) > 0.2 || // the town across the river
       nearTrack(x, z, 14) ||
       nearRoad(x, z, 14) ||
       Math.hypot(x - 8, z + 30) < 100 || // the village and its ring of farms

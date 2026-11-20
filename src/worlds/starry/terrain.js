@@ -3,12 +3,15 @@ import { paintMaterial } from '../../engine/paint.js';
 import { Builder, terrain, ribbon, patch, mountainRing, mix } from '../../engine/build.js';
 import { fbm, vnoise, smooth, clamp, lerp } from '../../engine/gl.js';
 import { FIELD } from './palette.js';
+import { townWeight, townLevel, inTown } from './town/layout.js';
 
 // The lie of the land: how high it stands, where the water is cut into it, where the roads
 // and footpaths run and what ground is spoken for, the fields, and the hills on the horizon.
 
 export const WL = -5; // water level of the canal and of the Rhône
 export const BRIDGE_X = 26.5;
+// the middle of the land: the valley floor lies within about 430 m of it, then climbs to the Alpilles
+export const CENTER = [10, -120];
 
 // the canal runs east-west north of the village and widens into the river
 export function channel(x) {
@@ -27,14 +30,17 @@ export function riverAt(x, z) {
 }
 
 // the land rolls, lies flat under the village and on a terrace under the asylum, heaps up into
-// the cypress hill, and climbs towards the mountains at the rim
+// the cypress hill, levels out into the plain the town stands on beyond the river, and climbs
+// towards the mountains at the rim
 export function heightAt(x, z) {
   const hill = 17 * Math.exp(-((x + 24) ** 2 + (z - 72) ** 2) / (2 * 22 * 22));
   const roll = (fbm(x * 0.011 + 3.1, z * 0.011 + 7.7, 3) - 0.5) * 17;
   const flatV = smooth(60, 104, Math.hypot(x - 8, z + 30));
   const flatA = smooth(26, 48, Math.hypot(x - 80, z - 46));
-  const far = smooth(150, 310, Math.hypot(x, z)) * 28;
+  const far = smooth(430, 760, Math.hypot(x - CENTER[0], z - CENTER[1])) * 90;
   let h = roll * flatV * flatA + far + hill * flatA + (1 - flatA) * 1.2;
+  const tw = townWeight(x, z);
+  if (tw > 0) h = lerp(h, townLevel(x, z) + far, tw);
   // the canal and the Rhône: a low levee, the bed cut into it, and a rise where the drawbridge lands
   const rv = riverAt(x, z);
   if (rv) {
@@ -50,7 +56,7 @@ export const ROADS = [
   { pts: [[-4, 96], [-5, 72], [-2, 46], [1, 22], [6, -4], [10, -30]], w: 5.2 },
   { pts: [[10, -30], [-8, -32], [-42, -35], [-70, -30], [-104, -18]], w: 4.6 },
   { pts: [[10, -30], [30, -31], [62, -28], [92, -34]], w: 4.6 },
-  { pts: [[10, -44], [13, -64], [21, -86], [26, -112]], w: 4.2 },
+  { pts: [[32, -31], [36.5, -48], [33, -68], [25, -90], [26, -112]], w: 4.2 }, // north to the drawbridge, round the café and the church
   { pts: [[6, -4], [-10, -3], [-32, -9], [-50, -6]], w: 3.6 },
   { pts: [[6, -6], [24, -6], [48, 4], [62, 26], [76, 40]], w: 3.8 },
 ];
@@ -69,6 +75,8 @@ export const TRACKS = [
 // ground reserved for a landmark: the scattered trees stay out of it  [x0, x1, z0, z1]
 export const KEEP = [
   [16, 30.5, -49, -34.5], // café terrace
+  [18.5, 30.7, -28.2, -17.4], // the Yellow House
+  [2.5, 17.5, -73, -40.5], // the church
   [23, 82, 83, 126], // sunflowers
   [86, 126, 63, 101], // almond orchard
   [105, 152, -53, -7], // red vineyard
@@ -94,13 +102,13 @@ export function ways() {
   }
   const nearTrack = (x, z, pad = 0) => tsamples.some((s) => (x - s[0]) ** 2 + (z - s[1]) ** 2 < (s[2] / 2 + pad) ** 2);
   const inKeep = (x, z, pad = 0) => KEEP.some((k) => x > k[0] - pad && x < k[1] + pad && z > k[2] - pad && z < k[3] + pad);
-  const cleared = (x, z, pad = 0) => inKeep(x, z, pad) || (riverAt(x, z)?.carve ?? 0) > 0.02 || nearTrack(x, z, 2 + pad);
+  const cleared = (x, z, pad = 0) => inKeep(x, z, pad) || (riverAt(x, z)?.carve ?? 0) > 0.02 || nearTrack(x, z, 2 + pad) || inTown(x, z, 14 + pad);
   const VOID = new Builder();
   return { nearRoad, nearTrack, inKeep, cleared, VOID };
 }
 
 // ---------------- ground: a patchwork of night fields
-export function ground(world, { S, H, strokes }) {
+export function ground(world, { S, H, strokes, mats }) {
   const groundCol = (x, z, y) => {
     const wx = x + (vnoise(x * 0.02, z * 0.02) - 0.5) * 34,
       wz = z + (vnoise(x * 0.02 + 9, z * 0.02 + 4) - 0.5) * 34;
@@ -115,14 +123,16 @@ export function ground(world, { S, H, strokes }) {
     if (edge > 0.465) c.lerp(new THREE.Color(0x122c40), 0.75);
     const dv = Math.hypot(x - 8, z + 30);
     c.lerp(new THREE.Color(0x245848), 1 - smooth(46, 70, dv)); // village green
-    const far = smooth(170, 300, Math.hypot(x, z));
+    const far = smooth(400, 700, Math.hypot(x - CENTER[0], z - CENTER[1]));
     c.lerp(new THREE.Color(0x1c3f86), far * 0.6);
+    // the town's own ground: gardens and yards between the houses
+    c.lerp(new THREE.Color(0x1f5560), townWeight(x, z, 20) * 0.7);
     const rv = riverAt(x, z);
     if (rv) c.lerp(new THREE.Color(0x3a6a52), rv.lev * 0.45).lerp(new THREE.Color(0x14285a), rv.carve);
     return c;
   };
   const groundMat = paintMaterial({ stroke: strokes.oil, scale: 0.052, contrast: 0.55, hueVar: 0.75, warp: 0.85, accent: 0xb9c95a, accentAmt: 0.3, impasto: 0.1, rim: 0.05, band: 0.3 });
-  const ground = new THREE.Mesh(terrain(H, 430, 250, groundCol), groundMat);
+  const ground = new THREE.Mesh(terrain(H, 1000, 330, groundCol, 0.74, 2.2, CENTER[0], CENTER[1] - 10), groundMat);
   ground.frustumCulled = false;
   S.add(ground);
 
@@ -132,7 +142,7 @@ export function ground(world, { S, H, strokes }) {
   for (const r of ROADS) roadB.parts.push(ribbon(r.pts, r.w, H, cob, { lift: 0.13, across: 4 }));
   roadB.parts.push(patch(10, -32, 15, H, cob, { lift: 0.15, wobble: 0.06 }));
   roadB.parts.push(patch(78, 44, 13, H, (x, y, z) => mix(0x9a8a6a, 0xc7b58a, vnoise(x * 0.3, z * 0.3)), { lift: 0.14, wobble: 0.1 }));
-  S.add(roadB.mesh(paintMaterial({ stroke: strokes.dab, scale: 0.2, contrast: 0.62, hueVar: 0.9, warp: 0.1, accent: 0xf0b6c8, accentAmt: 0.35, impasto: 0.14, rim: 0.05, band: 0.3 })));
+  S.add(roadB.mesh(mats.cobble));
 }
 
 // ---------------- the Alpilles
@@ -142,8 +152,11 @@ export function alpilles(world, { S, strokes }) {
     return 34 + right * 52 + Math.sin(a * 5.0 + 1.0) * 9 + Math.sin(a * 11.0) * 5 + fbm(a * 3.1, 2.2, 3) * 22;
   };
   const mcol = (x, y, z) => mix(0x16307a, 0x3f73c8, clamp((y + 5) / 95)).lerp(new THREE.Color(0x0c1a52), vnoise(x * 0.02, y * 0.08) * 0.4);
-  const mg = mountainRing({ radius: 330, base: -14, profile: prof, colorFn: mcol, depth: 90 });
-  const mm = new THREE.Mesh(mg, paintMaterial({ stroke: strokes.wavy, scale: 0.006, contrast: 0.85, hueVar: 0.5, warp: 0.2, accent: 0x8fc0f0, accentAmt: 0.35, rim: 0, band: 0.4, side: THREE.DoubleSide, wallStretch: 2.6, bigScale: 0.4, big: 0.9 }));
+  // the same range as the painting's, set further back and proportionally higher now that the valley is wider
+  const K = 2.42;
+  const mg = mountainRing({ radius: 800, base: -30, profile: (a) => prof(a) * K, colorFn: (x, y, z) => mcol(x / K, y / K, z / K), depth: 220 });
+  const mm = new THREE.Mesh(mg, paintMaterial({ stroke: strokes.wavy, scale: 0.006 / K, contrast: 0.85, hueVar: 0.5, warp: 0.2, accent: 0x8fc0f0, accentAmt: 0.35, rim: 0, band: 0.4, side: THREE.DoubleSide, wallStretch: 2.6, bigScale: 0.4, big: 0.9 }));
+  mm.position.set(CENTER[0], 0, CENTER[1]);
   mm.frustumCulled = false;
   S.add(mm);
 }

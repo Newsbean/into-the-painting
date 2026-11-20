@@ -105,6 +105,9 @@ export function buildTown(world, o) {
   });
   for (const sq of squares) SB.parts.push(patch(sq.x, sq.z, sq.r, H, cob, { lift: 0.16, wobble: sq.wobble ?? 0.04 }));
 
+  // ---------------------------------------------------------------- whatever else belongs in the chunks: people, stalls, fountains
+  o.populate?.({ kitAt: (x, z) => chunkOf(x, z).kit, traces, lots, occupied, inRoad, streets });
+
   // ---------------------------------------------------------------- finish
   const group = new THREE.Group();
   if (SB.parts.length) group.add(SB.mesh(mats.cobble));
