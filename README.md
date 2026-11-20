@@ -17,12 +17,17 @@ music. There are no image files of the paintings in the project, and there shoul
 
 ## Run it
 
+You need Node 22 (20.19 or newer also works) and a browser with WebGL2.
+
 ```bash
-npm install
+npm ci
 npm run dev
 ```
 
-Open http://localhost:5173. `npm run build` writes the static site to `dist/`.
+Open http://localhost:5173; the page reloads when you save a file. `npm run build` writes
+the static site to `dist/`, and `npm run check` runs what CI runs on every pull request.
+**[CONTRIBUTING.md](CONTRIBUTING.md) has the rest: the other commands, how we share the
+work, and how to add an asset.**
 
 Walk with WASD or the arrows, hold Space to ride the wind, Shift to hurry, M to mute.
 
@@ -48,6 +53,9 @@ src/
     built.js           brush atlases for built surfaces: masonry, ashlar, brick, tiles, slate, cobble, plank
     build.js           Builder: merge tinted boxes, cylinders, roofs, trees into one mesh
     soup.js            Soup: the fast path for thousands of small faces (walls, reveals, roofs)
+    facade.js          walls with openings, reveals, slabs: the pieces of any facade
+    kit.js             Kit: a block of buildings as a few merged meshes plus instanced details
+    plan.js            town planning: rows of lots along both sides of every street
     world.js           World base class: collision, story markers, the colour waves
     post.js sky.js player.js audio.js ui.js models.js
   worlds/<id>/       one folder per painting
@@ -106,12 +114,13 @@ what you made.
 
 ## The town kit (`src/worlds/starry/town`)
 
+Built on the engine's `facade.js`, `kit.js` and `plan.js`, which any world can use for its own buildings.
+
 | File | What it gives you |
 |---|---|
 | `house.js` | `house(kit, world, { x, z, ry, w, d, floors, R, style, shop })`: a town house with real window reveals, shops, balconies, dormers, chimneys |
 | `parts.js` | the instanced details: windows with shutters, doors, shopfronts with awnings, balconies, lanterns, lamp posts, strings of lights |
-| `kit.js` | `townMaterials(strokes)` and `Kit`, which gathers a block of town into a few meshes |
-| `plan.js` | `layLots(streets, ...)`: rows of houses along both sides of every street |
+| `kit.js` | `townMaterials(strokes)` and this town's `Kit` (the engine's Kit with these parts) |
 | `town.js` | `buildTown(world, { streets, squares, keep, inside })`: houses, cobbles, lamps, lights |
 | `layout.js` | where the Starry Night's town lies and how its streets run |
 | `church.js` | the church with the steeple |
