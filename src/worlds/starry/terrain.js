@@ -153,7 +153,7 @@ export function alpilles(world, { S, strokes }) {
   };
   const mcol = (x, y, z) => mix(0x16307a, 0x3f73c8, clamp((y + 5) / 95)).lerp(new THREE.Color(0x0c1a52), vnoise(x * 0.02, y * 0.08) * 0.4);
   // the same range as the painting's, set further back and proportionally higher now that the valley is wider
-  const K = 2.42;
+  const K = 3.0;
   const mg = mountainRing({ radius: 800, base: -30, profile: (a) => prof(a) * K, colorFn: (x, y, z) => mcol(x / K, y / K, z / K), depth: 220 });
   const mm = new THREE.Mesh(mg, paintMaterial({ stroke: strokes.wavy, scale: 0.006 / K, contrast: 0.85, hueVar: 0.5, warp: 0.2, accent: 0x8fc0f0, accentAmt: 0.35, rim: 0, band: 0.4, side: THREE.DoubleSide, wallStretch: 2.6, bigScale: 0.4, big: 0.9 }));
   mm.position.set(CENTER[0], 0, CENTER[1]);

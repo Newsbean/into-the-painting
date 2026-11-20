@@ -156,14 +156,20 @@ export class Player {
       side: THREE.DoubleSide,
       blending: THREE.AdditiveBlending,
       uniforms: { uColor: { value: new THREE.Color(1, 1, 1) }, uAmt: { value: 0 }, uNoise: G.uNoise, uTime: G.uTime },
-      vertexShader: `varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * viewMatrix * vec4(position, 1.0); }`,
+      vertexShader: `varying vec2 vUv; varying float vDist;
+        void main(){ vUv = uv; vec4 mv = viewMatrix * vec4(position, 1.0); vDist = -mv.z; gl_Position = projectionMatrix * mv; }`,
+      // a loaded brush dragged through the air: bristle streaks, thinning out along its length,
+      // and never bright right in front of the lens (the old paint trails back past the camera)
       fragmentShader: `
-        varying vec2 vUv; uniform vec3 uColor; uniform float uAmt; uniform sampler2D uNoise; uniform float uTime;
+        varying vec2 vUv; varying float vDist; uniform vec3 uColor; uniform float uAmt; uniform sampler2D uNoise; uniform float uTime;
         void main(){
           float edge = 1.0 - abs(vUv.y - 0.5) * 2.0;
           float n = texture2D(uNoise, vec2(vUv.x * 0.06 - uTime * 0.01, vUv.y * 0.012)).r;
-          float a = smoothstep(0.0, 0.5, edge) * (1.0 - vUv.x) * (0.55 + 0.75 * n) * uAmt;
-          gl_FragColor = vec4(uColor * a * 1.5, 1.0);
+          float bristle = 0.5 + 0.5 * sin(vUv.y * 34.0 + n * 9.0 + vUv.x * 5.0);
+          float tail = pow(1.0 - vUv.x, 1.7);
+          float a = smoothstep(0.0, 0.6, edge) * tail * (0.35 + 0.65 * n) * (0.45 + 0.55 * bristle) * uAmt;
+          a *= smoothstep(1.4, 8.0, vDist);
+          gl_FragColor = vec4(uColor * a * 0.62, 1.0);
         }`,
     });
     this.trail = new THREE.Mesh(tg, this.trailMat);
@@ -401,7 +407,7 @@ export class Player {
     const pos = this.trail.geometry.attributes.position;
     const amt = clamp(this.speed / 9) * 0.55 + this.fly * 0.75;
     this.trailMat.uniforms.uAmt.value = damp(this.trailMat.uniforms.uAmt.value, amt, 3, dt);
-    const w = 0.16 + this.fly * 0.34;
+    const w = 0.13 + this.fly * 0.2;
     for (let i = 0; i < N; i++) {
       const a = pts[Math.max(0, i - 1)],
         b = pts[Math.min(N - 1, i + 1)];

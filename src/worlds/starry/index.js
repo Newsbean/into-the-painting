@@ -6,6 +6,7 @@ import { dirOf, sky } from './sky.js';
 import { heightAt, ways, ground, alpilles, CENTER } from './terrain.js';
 import { townMaterials } from './town/kit.js';
 import { village } from './village.js';
+import { outskirts } from './outskirts.js';
 import { trees, irises, wheat } from './nature.js';
 import { villagers } from './people.js';
 import { glow } from './glow.js';
@@ -22,6 +23,7 @@ import { vincent, flyCrows } from './vincent/index.js';
 //   village.js   the village, its church and the asylum, and the town across the river (built with town/)
 //   town/        the town kit: house generator, facade parts, planner, church, people
 //   nature.js    trees, irises, the wheat field
+//   outskirts.js the countryside beyond the old fields: crops, windbreaks, groves, farms
 //   people.js    person(), the villagers
 //   glow.js      fireflies, far villages, and every lamp drawn as a point of light
 //   story.js     the easel; wisps, memento, echo, lines, facts
@@ -115,6 +117,8 @@ export class StarryWorld extends World {
     easel(this, kit);
     // everything else he painted
     vincent(this, kit);
+    // the countryside out to the foot of the mountains
+    this.outer = outskirts(this, kit);
     S.add(P.mesh(paintMaterial({ stroke: strokes.dab, scale: 0.6, contrast: 0.35, hueVar: 0.5, warp: 0.1, rim: 0.3, band: 0.25 })));
 
     S.add(B.mesh(paintMaterial({ stroke: strokes.dab, scale: 0.26, contrast: 0.42, hueVar: 0.6, warp: 0.12, accent: 0xb0c4ff, accentAmt: 0.16, impasto: 0.1, rim: 0.2, band: 0.2, emissive: 1.85, big: 0.5 })));
@@ -130,6 +134,9 @@ export class StarryWorld extends World {
   tick(dt, time, player, game) {
     flyCrows(this, time);
     // the fine detail of the houses is only drawn near the camera
-    if (game) this.town?.tick(game.camera.position);
+    if (game) {
+      this.town?.tick(game.camera.position);
+      this.outer?.tick(game.camera.position);
+    }
   }
 }
