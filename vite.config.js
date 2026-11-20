@@ -13,6 +13,12 @@ const captureSink = () => ({
         res.statusCode = 405;
         return res.end();
       }
+      // only this machine may write here, even when the server is opened to the network (npm run dev:lan)
+      const from = req.socket.remoteAddress || '';
+      if (!/^(::1|127\.0\.0\.1|::ffff:127\.0\.0\.1)$/.test(from)) {
+        res.statusCode = 403;
+        return res.end('local only');
+      }
       const url = new URL(req.url, 'http://local');
       const name = (url.searchParams.get('name') || '').replace(/\\/g, '/');
       if (!/^[\w\-./]+$/.test(name) || name.includes('..') || name.startsWith('/')) {
@@ -32,9 +38,13 @@ const captureSink = () => ({
   },
 });
 
-export default defineConfig({
+// npm run dev          the page reloads itself when a file is saved
+// npm run dev:steady   it does not (--mode steady): for film capture and automated runs,
+//                      where a reload halfway through would spoil the take
+// npm run dev:lan      also reachable from other devices on the same network
+export default defineConfig(({ mode }) => ({
   base: './',
   plugins: [captureSink()],
-  server: { host: '127.0.0.1', hmr: false },
+  server: { host: '127.0.0.1', hmr: mode !== 'steady' },
   build: { target: 'es2022', chunkSizeWarningLimit: 2000 },
-});
+}));

@@ -1,4 +1,4 @@
-// The town plan. Streets are polylines with a width; houses are laid in rows along
+// Town planning, for any world. Streets are polylines with a width; houses are laid in rows along
 // both sides of every street, facing it, wherever nothing is in the way: another
 // street, a square or a monument that must be kept clear, a house already standing.
 //
@@ -8,7 +8,7 @@
 //   inside:  (x, z) => boolean                         the edge of town
 //   lot:     { x, z, ry, w, d, street, side, s, before, after }   (before/after: is there a gap along the row)
 import * as THREE from 'three';
-import { lerp } from '../../../engine/gl.js';
+import { lerp } from './gl.js';
 
 // points about every `step` metres along a smoothed polyline, with the direction of travel
 export function trace(pts, step = 1) {

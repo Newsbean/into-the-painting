@@ -13,7 +13,7 @@ import { Builder, ribbon, patch, mix, xf } from '../../../engine/build.js';
 import { vnoise } from '../../../engine/gl.js';
 import { Kit, townMaterials } from './kit.js';
 import { house, randomStyle } from './house.js';
-import { layLots, inKeep, along, Hash } from './plan.js';
+import { layLots, inKeep, along, Hash } from '../../../engine/plan.js';
 
 const CHUNK = 96;
 const LAMP = 0xffc46a;

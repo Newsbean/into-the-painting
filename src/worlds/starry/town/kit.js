@@ -1,9 +1,7 @@
-// The town kit: the materials every building shares, and a Kit that gathers one
-// chunk of town (a block, a row of houses) into a few merged meshes plus the
-// instanced details that are only drawn close to the player.
-import * as THREE from 'three';
+// The Starry Night's town kit: the materials every building shares and the parts
+// library (parts.js), handed to the engine's Kit (engine/kit.js).
 import { paintMaterial } from '../../../engine/paint.js';
-import { Soup } from '../../../engine/soup.js';
+import { Kit as BaseKit } from '../../../engine/kit.js';
 import { makeParts } from './parts.js';
 
 // One set per world. All of them are "directed": the brushwork follows the face.
@@ -28,48 +26,9 @@ export function townMaterials(strokes) {
 let PARTS = null;
 export const parts = () => (PARTS ??= makeParts());
 
-export class Kit {
+// the Starry Night's kit: the engine's Kit with this town's parts
+export class Kit extends BaseKit {
   constructor(mats) {
-    this.mats = mats;
-    this.soups = {};
-    this.placed = {};
-  }
-  // the merged soup for a material name (see townMaterials)
-  s(name) {
-    return (this.soups[name] ??= new Soup());
-  }
-  // draw an instanced part: matrix places its unit opening; color tints its masked faces
-  place(part, matrix, color = 0xffffff) {
-    (this.placed[part] ??= []).push([matrix, color]);
-  }
-  // -> { base: Group of merged meshes, detail: Group of instanced parts, tris }
-  build() {
-    const base = new THREE.Group();
-    const detail = new THREE.Group();
-    let tris = 0;
-    for (const [name, soup] of Object.entries(this.soups)) {
-      if (soup.empty()) continue;
-      tris += soup.triangles;
-      base.add(soup.mesh(this.mats[name]));
-    }
-    const lib = parts();
-    const c = new THREE.Color();
-    for (const [name, list] of Object.entries(this.placed)) {
-      const geo = lib[name].geometry;
-      const im = new THREE.InstancedMesh(geo, this.mats.detail, list.length);
-      list.forEach(([m, col], i) => {
-        im.setMatrixAt(i, m);
-        im.setColorAt(i, c.set(col));
-      });
-      im.instanceMatrix.needsUpdate = true;
-      im.instanceColor.needsUpdate = true;
-      im.computeBoundingSphere();
-      im.computeBoundingBox();
-      detail.add(im);
-      tris += (geo.attributes.position.count / 3) * list.length;
-    }
-    this.soups = {};
-    this.placed = {};
-    return { base, detail, tris };
+    super(mats, parts());
   }
 }

@@ -10,6 +10,7 @@
 // that house); mask below 1 gives a darker or lighter shade of it.
 import * as THREE from 'three';
 import { Soup } from '../../../engine/soup.js';
+import { cuboid, face } from '../../../engine/facade.js';
 
 const STONE = 0xd9d0b4;
 const STONE_SHADE = 0xb9b096;
@@ -20,20 +21,6 @@ const BLACK = 0x000000;
 const WHITE = 0xffffff;
 // joinery stands dark against a lit room: a deep shade of the house's own shutter colour
 const JOIN = { mask: 0.5 };
-
-// an axis-aligned block from corner a to corner b; skip faces by letter: f(+z) k(-z) l(-x) r(+x) t(+y) b(-y)
-export function cuboid(S, a, b, col, o, skip = 'k') {
-  const [x0, y0, z0] = a,
-    [x1, y1, z1] = b;
-  if (!skip.includes('f')) S.quad([x0, y0, z1], [x1, y0, z1], [x1, y1, z1], [x0, y1, z1], col, o);
-  if (!skip.includes('k')) S.quad([x1, y0, z0], [x0, y0, z0], [x0, y1, z0], [x1, y1, z0], col, o);
-  if (!skip.includes('r')) S.quad([x1, y0, z1], [x1, y0, z0], [x1, y1, z0], [x1, y1, z1], col, o);
-  if (!skip.includes('l')) S.quad([x0, y0, z0], [x0, y0, z1], [x0, y1, z1], [x0, y1, z0], col, o);
-  if (!skip.includes('t')) S.quad([x0, y1, z1], [x1, y1, z1], [x1, y1, z0], [x0, y1, z0], col, o);
-  if (!skip.includes('b')) S.quad([x0, y0, z0], [x1, y0, z0], [x1, y0, z1], [x0, y0, z1], col, o);
-}
-// a flat panel facing out of the wall at depth z
-const face = (S, x0, x1, y0, y1, z, col, o) => S.quad([x0, y0, z], [x1, y0, z], [x1, y1, z], [x0, y1, z], col, o);
 
 const unit = (W, H) => new THREE.Matrix4().makeScale(1 / W, 1 / H, 1);
 

@@ -6,8 +6,7 @@
 import * as THREE from 'three';
 import { xf } from '../../../engine/build.js';
 import { smooth, vnoise } from '../../../engine/gl.js';
-import { at, wallBand, reveal, pane, slab } from './house.js';
-import { cuboid } from './parts.js';
+import { at, wallBand, reveal, pane, slab, cuboid } from '../../../engine/facade.js';
 import { Kit, townMaterials } from './kit.js';
 
 const GLASS = [0xffd56b, 0xff9a4a, 0xffe6a3, 0xffc861, 0xe8607a, 0xffd56b, 0x7ac8ff, 0xffb84d];

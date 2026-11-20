@@ -5,13 +5,22 @@
   "type": "module",
   "scripts": {
     "dev": "vite --port 5173 --strictPort",
+    "dev:steady": "vite --port 5173 --strictPort --mode steady",
+    "dev:lan": "vite --host 0.0.0.0 --port 5173 --strictPort",
     "build": "vite build",
-    "preview": "vite preview --port 5173 --strictPort"
+    "preview": "vite preview --port 5173 --strictPort",
+    "lint": "eslint .",
+    "check": "node tools/check-imports.mjs && eslint . && vite build"
   },
   "dependencies": {
     "three": "^0.187.0"
   },
   "devDependencies": {
+    "eslint": "^9.39.5",
+    "globals": "^17.14.0",
     "vite": "^8.3.8"
+  },
+  "engines": {
+    "node": "^20.19.0 || >=22.12.0"
   }
 }

@@ -4,7 +4,10 @@
     {
       "name": "into-the-painting",
       "runtimeExecutable": "npm",
-      "runtimeArgs": ["run", "dev"],
+      "runtimeArgs": [
+        "run",
+        "dev:steady"
+      ],
       "port": 5173
     }
   ]

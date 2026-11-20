@@ -7,7 +7,7 @@
 import * as THREE from 'three';
 import { xf } from '../../../engine/build.js';
 import { Kit, townMaterials } from './kit.js';
-import { along } from './plan.js';
+import { along } from '../../../engine/plan.js';
 
 const DRESS = [0x2f4f9a, 0x7a2f4a, 0x2f6a5a, 0x8a5a2a, 0x5a3a8a, 0xb8503a, 0x3a5a8a, 0xc9a24a, 0x6a2f3a, 0x35406a];
 const COAT = [0x1c2438, 0x2a2233, 0x3a2a22, 0x22323a, 0x2f3a5a, 0x4a3a2a];
