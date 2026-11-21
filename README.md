@@ -139,6 +139,22 @@ The Great Wave's buildings, in the flat colour and clean line of the prints.
 
 Lab: `/?debug&look=wave&lab=worlds/wave/edo/lab.js`
 
+## The wave, and what lives around it (`src/worlds/wave`)
+
+| File | What it gives you |
+|---|---|
+| `great-wave.js` | every breaking wave: a cross-section swept along the crest, with hooked claws of foam rooted on the lip |
+| `wave-material.js` | how a wave is painted (streaks that run with the water, the foam fringes, lace at the waterline, claws that clutch) and `sprayPoints` |
+| `life/ground.js` | what covers the ground: grass, flowers, bushes, stones, the hill forest, beach gear, Edo's pines and moored boats |
+| `life/walkers.js` | people walking the roads, and the daimyo's procession on the Tokaido |
+| `life/sea-sky.js` | cranes and gulls with beating wings, coasters under sail |
+| `life/air.js` | cherry petals on the wind, smoke from the roofs |
+| `life/raw.js` | the tools those share: `Raw` (triangles with colour, sway and tint), `instances()` (one geometry in thousands of places, culled by square of ground), `shoreZ()` |
+
+Everything in `life/` has its own dice and is built last, so adding to it never moves
+anything else. The surf on the beach and the foam lines on the swell are two switches
+on the engine's water paint: `waterMaterial({ shore: 1, lace: 0.6 })`.
+
 ## House rules
 
 - All art is made in code. Never add museum photographs or scans of the paintings.
