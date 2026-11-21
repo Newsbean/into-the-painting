@@ -54,7 +54,7 @@ export function story(world, { H, strokes }) {
     },
     exit: { pos: [70, H(70, 36), 36], ry: 0.9 },
   });
-  const task = addTask(world); // the game of this picture: task.js
+  const task = addTask(world); // the puzzle of this picture: task.js
   world.finalFact = 'The “morning star” was the planet Venus. The painting has hung at MoMA in New York since 1941.';
   world.finalLine = 'The last stroke: the morning star.';
   world.hints = {

@@ -43,7 +43,7 @@ export function addStory(world, kit) {
     },
     exit: { pos: [34, 0, -19.5], ry: 0 },
   });
-  const task = addTask(world, { strokes }); // the game of this picture: task.js
+  const task = addTask(world, { strokes }); // the puzzle of this picture: task.js
   world.finalFact = 'The blue of her scarf is ultramarine. The painting hangs in the Mauritshuis in The Hague.';
   world.finalLine = 'The last stroke: the blue of the scarf, and she turns.';
   world.hints = {

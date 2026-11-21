@@ -47,7 +47,7 @@ export function addStory(world, { H, strokes }) {
     },
     exit: { pos: [2, H(2, 208), 208], ry: 0 },
   });
-  const task = addTask(world); // the game of this picture: task.js
+  const task = addTask(world); // the puzzle of this picture: task.js
   world.finalFact = 'Under the Wave off Kanagawa travelled the whole world. Today it is even an emoji: 🌊';
   world.finalLine = 'The last layer: the deep blue. And the sea stands up into the picture.';
   world.hints = {

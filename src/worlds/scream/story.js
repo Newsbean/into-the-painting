@@ -51,7 +51,7 @@ export function addStory(world, kit) {
     },
     exit: { pos: [E.x - nx * 1.2 + 7, H(E.x - nx * 1.2 + 7, E.z - nz * 1.2 + 2.5), E.z - nz * 1.2 + 2.5], ry: 1.2 },
   });
-  // the game of this picture: task.js. His friends end where the picture has them: behind
+  // the puzzle of this picture: task.js. His friends end where the picture has them: behind
   // him, at the railing.
   const far = Math.hypot(e2.x - E.x, e2.z - E.z);
   const task = addTask(world, { H, back: [E.x + ((e2.x - E.x) / far) * 9 + nx * 2.7, E.z + ((e2.z - E.z) / far) * 9 + nz * 2.7] });

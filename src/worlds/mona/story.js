@@ -44,7 +44,7 @@ export function buildStory(world, kit) {
     },
     exit: { pos: [5.5, LY, 27], ry: -0.5 },
   });
-  const task = addTask(world, { strokes, LY }); // the game of this picture: task.js
+  const task = addTask(world, kit); // the puzzle of this picture: task.js
   world.finalFact = 'Stolen in 1911 and missing for more than two years, she came home in January 1914. 120,000 people came to see her in two days.';
   world.finalLine = 'The last stroke: the smile.';
   world.hints = {

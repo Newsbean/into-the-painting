@@ -88,34 +88,44 @@ once more or once less moves everything built after it**, so when you change a p
 later parts to shift, and when you only want to restyle something, keep its dice rolls as
 they are. Set pieces that roll their own dice (`rng(seed)`) are free of this.
 
-### The story of a world, and its game
+### The story of a world, and its puzzle
 
 Every world plays the same way: find the five lost colours, find the keepsake, carry it to
-the artist. Then comes the one thing only that picture needs: a game of its own, which can
-be failed and tried again, and which gets harder as it goes. When it is won the picture is
-finished. It lives in the world's `task.js`:
+the artist. Then comes the one thing only that picture needs: a puzzle of its own, in three
+linked steps. Something has to be found out in the world, something has to be worked out
+from the painting itself, and then it has to be done, which can be failed and tried again.
+When it is done the picture is finished. It lives in the world's `task.js`:
 
 ```js
 world.task = {
   ask: ['what the artist says when he asks for it', ...],
-  text: () => 'the objective shown on screen',
+  text: () => 'the objective shown on screen',     // by stage
   hint: () => 'what the curator says when the player is stuck',
-  start(game) {},                       // set the scene (game.hold(pose) takes the camera)
-  update(dt, game, mark) { ... }        // every frame; return true when it is won
+  start(game) {},                       // set the scene
+  update(dt, game, mark) { ... }        // every frame; return true when it is done
 };
 ```
 
-A game reads `game.keys` (held) and `game.pressed` (just gone down), and shows itself with
-`ui.meter(value, label)`, `ui.prompt(text)`, `ui.mini(w, h)` (a sheet to draw on) and
-`audio.tone(k)`.
+A puzzle reads `game.keys` (held) and `game.pressed` (just gone down), and shows itself with
+what `engine/ui.js` and `engine/dials.js` give it: `ui.meter(value, label)`, `ui.prompt(text)`,
+`ui.fact(label, text)`, `ui.mini(w, h, side)` (a sheet to draw on), `ui.rings(list)` (rings hung
+in the view to line the world up on), `dials(game, state, { title, rows, head })` (a sheet of
+choices), `mark(position, colour)` (a light at the edge of the view), `game.hold(pose)` (takes
+the camera) and `audio.tone(k)`.
 
-| World | Its game |
-|---|---|
-| The Starry Night | **Eleven lights.** Fly a course of rings that winds in over the village and light all eleven in one flight. Each light gives barely enough time to reach the next: it takes Shift, early turns and a dive. Run out and the sky goes dark again. |
-| The Great Wave | **Pull the print.** Three blocks cut from the real print by colour slide over the sheet; press each when its corner marks meet. Off register spoils the sheet and it starts again; each block is faster and less forgiving. |
-| Girl with a Pearl Earring | **Which one is she?** The market fills with girls in headscarves. Find the blue scarf with the yellow tail and the pearl, against the clock, three times: more girls each round, scarves nearer to hers, and at the last she keeps away from you. |
-| The Scream | **Breathe.** Hold Space as the ring opens, let go as it closes. Breaths in time still the sky (you can watch it happen); breaths out of time bring the scream back. They grow longer, uneven and less forgiving. |
-| Mona Lisa | **Play her a smile.** Three musicians play a phrase; play it back. Five phrases, each a note longer and quicker. Her smile grows with every one; a wrong note and she looks away. |
+| World | Find | Work out | Do |
+|---|---|---|---|
+| The Starry Night | Three pages of his letters to Theo, blown about the land. The last says what he did: he arranged it. | **Stand where the picture comes together.** Three rings hang in the view where the painting has its cypress, its steeple and its moon. The moon and steeple are far and only turning moves them; the cypress is near and slides across the sky as you walk. | Fly the eleven lights alight in one flight before the night runs out, the morning star last. |
+| The Great Wave | The three carved blocks, drying along the shore: bare wood, cut backwards, cut out of the real print by colour. | **Which ink, and in what order?** With the three blocks to look at: the lines are blue, not black; the sky is grey; the lines go on first; the Prussian blue goes over the dark stripes. | Pull the print: press each block as its corner marks meet the marks on the sheet. Off register spoils the sheet. |
+| Girl with a Pearl Earring | Three people in Delft who saw her go by. Each remembers one thing. | **Which one is she?** Nine girls in the market, each wrong in one thing but her; a wrong guess costs time, and she keeps away from you. | Bring her home and set the studio as the painting has it: the light, the curtain, the turn of her head, the scarf. |
+| The Scream | Five torn lines of his diary, each lying where it happened: the road, the bench, the red sky, the railing, the pier. | **Set the evening in order.** He says which is the first line out of place. | Breathe with him: hold as the ring opens, let go as it closes, until the sky is still. |
+| Mona Lisa | His page is written backwards. Hold it to the mirror on his workbench (or read it as it is). | **Where are his players?** In the land he put behind her: the lute where the road winds, the pipe on the bridge of arches, the voice at the mill on the river. Nothing points the way; each plays his own note, louder as you come near. | Play her a smile: they play a phrase, you play it back, five times, each longer and quicker. |
+
+What a puzzle says about its painting has to be true. The Great Wave's inks follow the
+Metropolitan Museum's study of the print (the lines are Prussian blue mixed with indigo, and
+the pure Prussian blue was printed over the dark stripes); Vincent's pages are his own
+letters, put into plain English; the Scream's lines are Munch's diary note of 1892; Vasari
+is the source for Leonardo's musicians.
 
 ### Painting with code
 
