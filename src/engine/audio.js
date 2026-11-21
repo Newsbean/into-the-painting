@@ -320,7 +320,7 @@ export class GameAudio {
 
 // The score for a film, rendered offline with the game's own theme and voices.
 // cues:  [{ t, world, open? }]  the theme restarts in that world's voicing at t
-// marks: [{ t, kind: 'chime' | 'finale' | 'open' | 'muffle', world?, k? }]
+// marks: [{ t, kind: 'chime' | 'finale' | 'whoosh' | 'open' | 'muffle', world?, k? }]
 export async function renderScore(cues, duration, marks = [], rate = 44100) {
   const ctx = new OfflineAudioContext(2, Math.ceil(duration * rate), rate);
   const a = new GameAudio();
@@ -349,6 +349,7 @@ export async function renderScore(cues, duration, marks = [], rate = 44100) {
     if (m.world) a.world = m.world;
     if (m.kind === 'chime') a.chime(m.k ?? 0, m.t);
     else if (m.kind === 'finale') a.finale(m.t);
+    else if (m.kind === 'whoosh') a.whoosh(m.dur ?? 2.4, m.f0 ?? 120, m.f1 ?? 2400, m.gain ?? 0.3, m.t);
     else if (m.kind === 'muffle') a.lp.frequency.setValueAtTime(m.hz ?? 620, m.t);
     else if (m.kind === 'open') a.lp.frequency.setTargetAtTime(16000, m.t, m.tau ?? 0.5);
   }

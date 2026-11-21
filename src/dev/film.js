@@ -1,13 +1,18 @@
 // Dev only: records the showcase film frame by frame.
 //
-//   npm run dev, then open  /?debug&film&only=<world>   (or /?debug&film for the gallery)
+//   npm run dev:steady, then open  /?debug&film   (the whole game: a shot fetches its own
+//                                  world), or /?debug&film&only=<world> to work on one
 //   film.setup()                     1920x1080, game loop paused, HUD hidden
 //   await film.render('<shot>')      frames -> ./capture/film/<shot>/0001.jpg ...
 //   await film.render('<shot>', { preview: 4 })   a few stills -> ./capture/prev/
 //   await film.stills('<name>', [views])          several angles on one sheet -> ./capture/prev/
+//   film.queue([...shots])           one after another; film.st says how far it has got
+//   await film.cards(); await film.matte(world)   the title cards and gilt frames -> ./capture/film/overlay/
+//   await film.score(cues, seconds, marks)        the music -> ./capture/film/score.wav
 //
 // Every frame is stepped at exactly 1/30 s, so a shot renders the same however slow
-// the machine is. tools/film/assemble.sh cuts the shots together with ffmpeg.
+// the machine is. tools/film/assemble.mjs cuts the shots together with ffmpeg, following
+// tools/film/cut.json.
 import * as THREE from 'three';
 import { renderScore, wavBlob } from '../engine/audio.js';
 import { ease, smooth, clamp, lerp } from '../engine/gl.js';
@@ -230,18 +235,73 @@ export function installFilm(g) {
       fly(this.k, u);
     },
   };
-  SHOTS.starry_wheat = {
+  // a street of the town across the river, down to its square
+  SHOTS.starry_street = {
     world: 'starry',
-    frames: 84,
+    frames: 72,
     init() {
       dress();
       this.k = [
-        { p: rel([-62, 3.0, 5]), t: rel([-95, 7, -26]), fov: 58 },
-        { p: rel([-68.5, 3.8, -0.5]), t: rel([-97, 8, -28]), fov: 58 },
+        { p: rel([27.6, 2.6, -258]), t: rel([26.6, 8.5, -310]), fov: 58 },
+        { p: rel([26.8, 3.2, -267]), t: rel([26.6, 9.5, -310]), fov: 58 },
       ];
     },
     each(i, u) {
       fly(this.k, u);
+    },
+  };
+  // the game of this picture: she flies its lights alight, one ring after another
+  SHOTS.starry_lights = {
+    world: 'starry',
+    frames: 96,
+    warm: 20,
+    init(w) {
+      dress({ mira: true });
+      const L = w.task.lights;
+      this.pts = [[62, 26, 96], ...[0, 1, 2, 3].map((k) => L[k].g.position.toArray())].map((a) => ({ p: a, t: a }));
+      this.lit = -1;
+      this.pop = [];
+      L.forEach((l, k) => {
+        l.g.visible = l.shaft.visible = k < 4;
+        l.hoop.visible = true;
+        l.hoop.material.opacity = 0.9;
+        l.star.scale.setScalar(4);
+        l.star.material.opacity = 0.6;
+      });
+      const p = g.player;
+      p.trail.visible = false;
+      p.glow.material.opacity = 0.4; // (at this distance her lantern would hide her)
+      p.place(V(this.pts[0].p), Math.PI);
+      p.fly = 1;
+      p.frozen = true;
+      this.at = (s) => V(along(this.pts, s).p);
+    },
+    each(i, u, w) {
+      // she is carried along the course, not flown: the same every take
+      const s = 0.15 + u * 0.64,
+        a = this.at(s),
+        dir = this.at(s + 0.012).sub(a).normalize(),
+        p = g.player;
+      p.pos.copy(a);
+      p.vel.copy(dir).multiplyScalar(26);
+      p.onGround = false;
+      p.yaw = Math.atan2(dir.x, dir.z);
+      const L = w.task.lights;
+      for (let k = this.lit + 1; k < 4; k++) {
+        if (a.distanceTo(L[k].g.position) > 6) continue;
+        this.lit = k;
+        this.pop[k] = i;
+        L[k].hoop.visible = L[k].shaft.visible = false;
+      }
+      // a ring she has lit bursts, and is gone before the camera reaches it
+      this.pop.forEach((at, k) => {
+        const f = clamp((i - at) / 5);
+        L[k].star.scale.setScalar(4 + 9 * Math.sin(f * Math.PI));
+        L[k].star.material.opacity = 1 - f;
+      });
+      const side = new THREE.Vector3(-dir.z, 0, dir.x);
+      const eye = a.clone().addScaledVector(dir, -7.2).addScaledVector(side, 1.7).add(new THREE.Vector3(0, 2.1, 0));
+      cam(eye.toArray(), a.clone().addScaledVector(dir, 40).add(new THREE.Vector3(0, -1.5, 0)).toArray(), 60);
     },
   };
   SHOTS.starry_frame = framed('starry', 120);
@@ -260,6 +320,23 @@ export function installFilm(g) {
       this.k = [
         { p: rel([87, 12.5, 218]), t: rel([52, 9, 100]), fov: 55 },
         { p: rel([80, 6.5, 196]), t: rel([57, 7.6, 120]), fov: 51 },
+      ];
+    },
+    each(i, u, w) {
+      w.final = 0;
+      fly(this.k, u);
+    },
+  };
+  // in along the pier to the beach, with everyone on it
+  SHOTS.wave_front = {
+    world: 'wave',
+    frames: 66,
+    init(w) {
+      dress();
+      calmSea(w);
+      this.k = [
+        { p: rel([15, 8.5, 160]), t: rel([4, 3.5, 216]), fov: 54 },
+        { p: rel([9, 5.2, 181]), t: rel([2, 3.6, 218]), fov: 54 },
       ];
     },
     each(i, u, w) {
@@ -357,6 +434,23 @@ export function installFilm(g) {
       fly(this.k, u);
     },
   };
+  // Delft as it was rebuilt: over the stepped gables, on the market square, along the side canal
+  const delft = (frames, a, b) => ({
+    world: 'pearl',
+    frames,
+    init(w) {
+      dress();
+      w.turn = 0;
+      this.k = [a, b].map((q) => ({ p: rel(q.p), t: rel(q.t), fov: q.fov }));
+    },
+    each(i, u, w) {
+      w.turn = 0;
+      fly(this.k, u);
+    },
+  });
+  SHOTS.pearl_roofs = delft(72, { p: [46, 32, 66], t: [-20, 4, 20], fov: 58 }, { p: [31, 26, 53], t: [-27, 4, 25], fov: 58 });
+  SHOTS.pearl_market = delft(60, { p: [-27, 2.8, 28], t: [-48, 11, 82], fov: 58 }, { p: [-29.4, 3.1, 33.4], t: [-47.4, 11.6, 83], fov: 58 });
+  SHOTS.pearl_side = delft(60, { p: [59.6, 3.4, 17], t: [62, 4, 110], fov: 56 }, { p: [60.5, 3.0, 23.5], t: [62, 4.2, 110], fov: 56 });
   // the last stroke, and she turns
   SHOTS.pearl_turn = framed('pearl', 138, {
     settle: 0.66,
@@ -413,7 +507,28 @@ export function installFilm(g) {
       fly(this.k, u);
     },
   };
-  SHOTS.scream_frame = framed('scream', 132, { settle: 0.66 });
+  // Kristiania from out on the fjord, and its quay at dusk
+  const fjord = (frames, a, b) => ({
+    world: 'scream',
+    frames,
+    init() {
+      dress();
+      this.k = [a, b].map((q) => ({ p: rel(q.p), t: rel(q.t), fov: q.fov }));
+    },
+    each(i, u) {
+      fly(this.k, u);
+    },
+  });
+  SHOTS.scream_harbour = fjord(72, { p: [-219, 14, -204], t: [-215, 6, -80], fov: 56 }, { p: [-211, 11, -190], t: [-214, 6, -80], fov: 56 });
+  SHOTS.scream_quay = fjord(60, { p: [-149.4, 4.2, -102], t: [-162, 3, -150], fov: 58 }, { p: [-151.6, 3.6, -107.5], t: [-162.5, 3, -150], fov: 58 });
+  // (the figure on the road is the one you bring the diary back to: he belongs in this picture)
+  SHOTS.scream_frame = framed('scream', 132, {
+    settle: 0.66,
+    init(w) {
+      w.echoGroup.visible = true;
+      if (w.echoGroup.userData.beam) w.echoGroup.userData.beam.visible = false;
+    },
+  });
 
   // ------------------------------------------------------------------ Mona Lisa
   SHOTS.mona_valley = {
@@ -473,13 +588,158 @@ export function installFilm(g) {
       fly(this.k, ease(u) * 0.5 + u * 0.5);
     },
   };
-  SHOTS.mona_frame = framed('mona', 126, { settle: 0.66 });
+  // the walled town of towers from the air, and the bridge of arches that stands behind her
+  const valley = (frames, a, b) => ({
+    world: 'mona',
+    frames,
+    init() {
+      dress();
+      this.k = [a, b].map((q) => ({ p: rel(q.p), t: rel(q.t), fov: q.fov }));
+    },
+    each(i, u) {
+      fly(this.k, u);
+    },
+  });
+  SHOTS.mona_town = valley(72, { p: [-172, 54, -90], t: [-130, 14, -150], fov: 56 }, { p: [-181, 47, -113], t: [-130, 14, -150], fov: 56 });
+  SHOTS.mona_bridge = valley(60, { p: [25, 7.2, -97], t: [63, 5, -121], fov: 56 }, { p: [28.6, 6.8, -99.6], t: [63.3, 5, -121], fov: 56 });
+  // the game of this picture: his three players, gathered beside her, play her a smile
+  SHOTS.mona_band = {
+    world: 'mona',
+    frames: 72,
+    warm: 10,
+    init(w) {
+      dress();
+      const t = w.task,
+        p = g.player,
+        L = w.heightAt(0, 0),
+        none = () => {};
+      if (t.stage !== 'play') {
+        // play the puzzle through to where they stand in the loggia
+        t.start();
+        for (const m of t.band) {
+          p.pos.copy(m.g.position);
+          t.update(DT, g, none);
+        }
+        p.pos.set(3.9, L, 0);
+        t.update(DT, g, none);
+        g.camTween = null;
+      }
+      g.ui.mini();
+      for (const m of t.band) m.tag.visible = false;
+      for (const x of w.waves) x.max = x.r = x.fresh = 0;
+      p.pos.set(900, gy(900, 900), 900);
+      Object.assign(t, { round: 4, phase: 'ready', t: 0.05, warm: 0.3 });
+      this.k = [
+        { p: [1.5, L + 1.65, 2.6], t: [-2.0, L + 1.2, -2.8], fov: 44 },
+        { p: [0.9, L + 1.6, 1.5], t: [-1.9, L + 1.2, -2.8], fov: 44 },
+      ];
+    },
+    each(i, u, w) {
+      const t = w.task;
+      t.warm = 0.3 + 0.7 * u;
+      t.update(DT, g, () => {});
+      if (t.phase === 'play') Object.assign(t, { phase: 'ready', t: 0.05 }); // they play on
+      fly(this.k, u);
+    },
+  };
+  // the last stroke: the smile
+  SHOTS.mona_frame = framed('mona', 126, {
+    settle: 0.66,
+    init(w) {
+      w.smile = 0;
+    },
+    each(i, u, w) {
+      w.smile = ease(clamp((u - 0.22) / 0.42));
+    },
+  });
+
+  // ------------------------------------------------------------------ The Gallery Between
+  // (its pictures follow world.done; the shots set that, and the last one puts it back)
+  const hall = (done) => {
+    for (const p of g.world.pictures) {
+      p.world.done = done;
+      p.mat.uniforms.uDone.value = done ? 1 : 0;
+      p.mat.uniforms.uPulse.value = 0;
+      if (p.beam) p.beam.visible = false;
+    }
+  };
+  // five masterpieces, in pencil
+  SHOTS.gallery_wall = {
+    world: 'gallery',
+    frames: 90,
+    init() {
+      dress({ restored: null });
+      hall(false);
+      this.k = [
+        { p: [0, 4.2, 33], t: [0, 4.4, -18], fov: 44 },
+        { p: [0, 4.1, 27], t: [0, 4.4, -18], fov: 44 },
+      ];
+    },
+    each(i, u) {
+      fly(this.k, u);
+    },
+  };
+  // she walks up to the first of them, and the camera goes on into it
+  SHOTS.gallery_step = {
+    world: 'gallery',
+    frames: 72,
+    warm: 12,
+    init(w) {
+      dress({ mira: true, restored: null });
+      hall(false);
+      const { slot: s, mark: m } = w.pictures[0];
+      this.at = (d, side = 0, h = 0) => [m.x + s.nx * d + s.nz * side, h, m.z + s.nz * d - s.nx * side];
+      this.dir = new THREE.Vector3(-s.nx, 0, -s.nz);
+      this.m = m;
+      const p = g.player;
+      p.trail.visible = false;
+      p.place(V(this.at(8.6)), Math.atan2(-s.nx, -s.nz));
+      p.frozen = true;
+    },
+    each(i, u) {
+      // carried, like the flight: her walk is the same every take
+      const p = g.player,
+        a = this.at(8.6 - 4.4 * u),
+        m = this.m,
+        k = ease(u);
+      p.pos.set(a[0], 0, a[2]);
+      p.vel.copy(this.dir).multiplyScalar(2.6);
+      cam(mix3(this.at(13.5, 1.9, 2.3), this.at(5.6, 0.35, 3.3), k), [m.x, lerp(2.7, 4.0, k), m.z], lerp(46, 40, k));
+    },
+  };
+  // and at the end of the night they come home, one after another
+  SHOTS.gallery_home = {
+    world: 'gallery',
+    frames: 164, // (the title comes up over the end of it)
+    init() {
+      dress({ restored: null });
+      hall(false);
+      // back and a little up: the pictures sink below the middle of the frame, where the title comes
+      this.k = [
+        { p: [0, 4.0, 23], t: [0, 4.5, -18], fov: 46 },
+        { p: [0, 4.3, 32], t: [0, 12.5, -18], fov: 44 },
+      ];
+    },
+    each(i, u, w) {
+      w.pictures.forEach((p, k) => {
+        const v = ease(clamp((u * 2.05 - k * 0.13) / 0.3));
+        p.mat.uniforms.uDone.value = v;
+        p.world.done = i < this.frames - 1 && v > 0.5;
+      });
+      fly(this.k, ease(u));
+    },
+  };
 
   async function render(name, { preview = 0 } = {}) {
     const s = SHOTS[name];
     if (!s) throw new Error('no shot ' + name);
     if (st.busy) throw new Error('busy with ' + st.busy);
-    if (s.world !== g.world.id) throw new Error(`${name} needs the ${s.world} world`);
+    if (s.world !== g.world.id) {
+      // with the whole game loaded (/?debug&film) a shot fetches its own world
+      if (!g.worlds?.[s.world]) throw new Error(`${name} needs the ${s.world} world`);
+      await g.debug.go(s.world);
+      setup(...(st.size ?? []));
+    }
     if (!st.size) setup();
     Object.assign(st, { busy: name, done: 0, total: s.frames, error: null });
     try {
@@ -640,6 +900,7 @@ export function installFilm(g) {
     x.fillRect(0, 0, 1920, 1080);
     text(x, 'Into the Painting', 960, 548, { font: `italic 500 $ ${SERIF}`, size: 176, shadow: 0.7 });
     text(x, 'Walk into five masterpieces'.toUpperCase(), 960, 628, { font: `400 $ ${SANS}`, size: 25, track: 0.42, alpha: 0.92 });
+    text(x, 'Play it in your browser  ·  into-the-painting.vercel.app'.toUpperCase(), 960, 968, { font: `400 $ ${SANS}`, size: 17, track: 0.3, alpha: 0.78 });
     return savePng(c, 'title');
   }
   async function cards() {
@@ -647,6 +908,7 @@ export function installFilm(g) {
     const made = [
       await line('one', 'One night. Five masterpieces without their colour.'),
       await line('two', 'Step inside, and bring it home.'),
+      await line('three', 'Every painting hides a puzzle of its own.'),
       await place('starry', 'Saint-Rémy, 1889', 'Vincent van Gogh'),
       await place('wave', 'Off Kanagawa, c. 1831', 'Katsushika Hokusai'),
       await place('pearl', 'Delft, c. 1665', 'Johannes Vermeer'),
@@ -674,7 +936,19 @@ export function installFilm(g) {
     return { seconds: buf.duration, peak: +peak.toFixed(3), rms: +Math.sqrt(sum / d.length).toFixed(4) };
   }
 
-  const film = { st, setup, dress, cam, rel, still, stills, render, queue, SHOTS, matte, cards, score, fly, along, V, gy, ease, out, mix3 };
+  // The whole film, from /?debug&film: the cards, the gilt frames, the score, and then every
+  // shot in the cut, queued (watch film.st). all({ shots: false }) leaves the frames alone.
+  async function all({ shots = true } = {}) {
+    const cut = await (await fetch('/tools/film/cut.json')).json();
+    setup(...cut.size);
+    const made = await cards();
+    for (const id of g.order) await matte(g.worlds[id]);
+    const music = cut.music ? await score(cut.music.cues, cut.music.seconds, cut.music.marks) : null;
+    const names = [...new Set(cut.clips.map((c) => c.shot).filter(Boolean))];
+    return { cards: made.made.length, music, shots: shots ? queue(names) : names };
+  }
+
+  const film = { st, setup, dress, cam, rel, still, stills, render, queue, all, SHOTS, matte, cards, score, fly, along, V, gy, ease, out, mix3 };
   window.film = film;
   return film;
 }

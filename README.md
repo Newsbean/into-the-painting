@@ -288,4 +288,24 @@ reproductions that are too (Wikimedia Commons), and list where each came from in
 ## Recording the showcase film
 
 `src/dev/film.js` steps the game at exactly 1/30 s and saves every frame through the dev
-server into `./capture/film/<shot>/` (ignored by git). See the notes at the top of that file.
+server into `./capture/film/<shot>/` (ignored by git), so a shot comes out the same on any
+machine. The one-minute film is three things:
+
+- **the shots**, in `src/dev/film.js`: a camera move each, some with the game played in them
+  (the flight through the lights, the three musicians);
+- **the cut**, `tools/film/cut.json`: which frames of which shot, in what order, the captions
+  and gilt frames laid over them, and the music's cues;
+- **the assembler**, `tools/film/assemble.mjs`, which hands all of that to ffmpeg.
+
+To record it again (ffmpeg on the PATH; about fifteen minutes, mostly waiting):
+
+```bash
+npm run dev:steady                  # then open http://localhost:5173/?debug&film
+#   in the page's console:  await film.all()      cards, frames, score, then every shot
+#   film.st shows how far it has got; it is done when film.st.queue is null
+node tools/film/assemble.mjs        # -> capture/showcase/into-the-painting.mp4
+```
+
+To change a shot, work on it alone (`/?debug&film&only=<world>`, then
+`await film.render('<shot>', { preview: 4 })` for stills in `capture/prev/`), and render it for
+real with `await film.render('<shot>')`. The notes at the top of `film.js` have the rest.

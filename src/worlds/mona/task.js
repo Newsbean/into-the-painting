@@ -128,6 +128,7 @@ export function addTask(world, { H, LY, tuMats }) {
   const task = {
     done: false,
     stage: 'mirror', // mirror -> gather -> back -> play
+    band,
     read: false,
     help: false,
     sheet: '',

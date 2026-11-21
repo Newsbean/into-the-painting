@@ -1,0 +1,64 @@
+{
+  "fps": 30,
+  "size": [1920, 1080],
+  "out": "capture/showcase/into-the-painting.mp4",
+  "crf": 20,
+  "maxrate": "16M",
+  "music": {
+    "seconds": 60,
+    "cues": [
+      { "t": 0, "world": "gallery" },
+      { "t": 5.2, "world": "starry" },
+      { "t": 18.3, "world": "wave" },
+      { "t": 27.8, "world": "pearl" },
+      { "t": 36.6, "world": "scream" },
+      { "t": 45.03, "world": "mona" },
+      { "t": 54.53, "world": "gallery" }
+    ],
+    "marks": [
+      { "t": 0, "kind": "muffle", "hz": 900 },
+      { "t": 6.0, "kind": "open", "tau": 0.7 },
+      { "t": 6.0, "kind": "chime", "world": "starry", "k": 0 },
+      { "t": 16.3, "kind": "chime", "world": "starry", "k": 2 },
+      { "t": 23.7, "kind": "whoosh", "dur": 2.6, "f0": 90, "f1": 2200, "gain": 0.34 },
+      { "t": 26.0, "kind": "chime", "world": "wave", "k": 2 },
+      { "t": 35.0, "kind": "chime", "world": "pearl", "k": 2 },
+      { "t": 43.5, "kind": "chime", "world": "scream", "k": 2 },
+      { "t": 53.06, "kind": "chime", "world": "mona", "k": 2 },
+      { "t": 54.7, "kind": "finale", "world": "gallery" }
+    ]
+  },
+  "clips": [
+    { "shot": "gallery_wall", "from": 1, "frames": 84, "fadeIn": { "d": 0.8, "color": "black" }, "overlays": [{ "png": "line_one", "in": 0.5, "out": 2.7, "fade": 0.45 }] },
+    { "shot": "gallery_step", "from": 1, "frames": 72, "fadeOut": { "d": 0.35, "color": "#eee7d3" }, "overlays": [{ "png": "line_two", "in": 0.15, "out": 2.0, "fade": 0.4 }] },
+
+    { "shot": "starry_bloom", "from": 10, "frames": 138, "fadeIn": { "d": 0.3, "color": "#eee7d3" }, "overlays": [{ "png": "place_starry", "in": 1.7, "out": 4.5, "fade": 0.5 }] },
+    { "shot": "starry_lights", "from": 4, "frames": 81, "overlays": [{ "png": "line_three", "in": 0.25, "out": 2.55, "fade": 0.4 }] },
+    { "shot": "starry_cafe", "from": 20, "frames": 42 },
+    { "shot": "starry_street", "from": 12, "frames": 42 },
+    { "shot": "starry_frame", "from": 31, "frames": 90, "overlays": [{ "png": "matte_starry", "in": 1.0, "fade": 0.6 }] },
+
+    { "shot": "wave_shore", "from": 1, "frames": 60, "overlays": [{ "png": "place_wave", "in": 0.2, "out": 1.9, "fade": 0.4 }] },
+    { "shot": "wave_front", "from": 4, "frames": 48 },
+    { "shot": "wave_bridge", "from": 10, "frames": 48 },
+    { "shot": "wave_rise", "from": 16, "frames": 129, "overlays": [{ "png": "matte_wave", "in": 2.5, "fade": 0.6 }] },
+
+    { "shot": "pearl_roofs", "from": 1, "frames": 60, "overlays": [{ "png": "place_pearl", "in": 0.2, "out": 1.9, "fade": 0.4 }] },
+    { "shot": "pearl_market", "from": 1, "frames": 45 },
+    { "shot": "pearl_side", "from": 8, "frames": 45 },
+    { "shot": "pearl_turn", "from": 25, "frames": 114, "overlays": [{ "png": "matte_pearl", "in": 2.2, "fade": 0.6 }] },
+
+    { "shot": "scream_harbour", "from": 1, "frames": 60, "overlays": [{ "png": "place_scream", "in": 0.2, "out": 1.9, "fade": 0.4 }] },
+    { "shot": "scream_sun", "from": 15, "frames": 45 },
+    { "shot": "scream_quay", "from": 8, "frames": 45 },
+    { "shot": "scream_frame", "from": 30, "frames": 103, "overlays": [{ "png": "matte_scream", "in": 1.9, "fade": 0.6 }] },
+
+    { "shot": "mona_town", "from": 1, "frames": 60, "overlays": [{ "png": "place_mona", "in": 0.2, "out": 1.9, "fade": 0.4 }] },
+    { "shot": "mona_bridge", "from": 6, "frames": 36 },
+    { "shot": "mona_horse", "from": 20, "frames": 36 },
+    { "shot": "mona_band", "from": 10, "frames": 54 },
+    { "shot": "mona_frame", "from": 28, "frames": 99, "overlays": [{ "png": "matte_mona", "in": 1.83, "fade": 0.6 }] },
+
+    { "shot": "gallery_home", "from": 1, "frames": 164, "fadeOut": { "d": 0.6, "color": "black" }, "overlays": [{ "png": "title", "in": 2.5, "fade": 0.8 }] }
+  ]
+}
