@@ -6,6 +6,7 @@
 //                so that only what is in view, and near enough to matter, is drawn
 //   shoreZ()     where the land reaches a given height above the sea, going inland
 import * as THREE from 'three';
+import { weld } from '../../../engine/weld.js';
 
 const _c = new THREE.Color();
 const _v = new THREE.Vector3();
@@ -77,7 +78,7 @@ export class Raw {
     g.setAttribute('color', new THREE.Float32BufferAttribute(this.c, 3));
     g.setAttribute('aData', new THREE.Float32BufferAttribute(this.d, 4));
     g.computeBoundingSphere();
-    return g;
+    return weld(g);
   }
 }
 

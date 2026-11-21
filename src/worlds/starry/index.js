@@ -119,9 +119,10 @@ export class StarryWorld extends World {
     vincent(this, kit);
     // the countryside out to the foot of the mountains
     this.outer = outskirts(this, kit);
-    S.add(P.mesh(paintMaterial({ stroke: strokes.dab, scale: 0.6, contrast: 0.35, hueVar: 0.5, warp: 0.1, rim: 0.3, band: 0.25 })));
+    // (in squares of ground, so that what is behind you is not drawn)
+    S.add(P.meshes(paintMaterial({ stroke: strokes.dab, scale: 0.6, contrast: 0.35, hueVar: 0.5, warp: 0.1, rim: 0.3, band: 0.25 }), 150));
 
-    S.add(B.mesh(paintMaterial({ stroke: strokes.dab, scale: 0.26, contrast: 0.42, hueVar: 0.6, warp: 0.12, accent: 0xb0c4ff, accentAmt: 0.16, impasto: 0.1, rim: 0.2, band: 0.2, emissive: 1.85, big: 0.5 })));
+    S.add(B.meshes(paintMaterial({ stroke: strokes.dab, scale: 0.26, contrast: 0.42, hueVar: 0.6, warp: 0.12, accent: 0xb0c4ff, accentAmt: 0.16, impasto: 0.1, rim: 0.2, band: 0.2, emissive: 1.85, big: 0.5 }), 150));
 
     // ---------------- the Alpilles
     alpilles(this, kit);

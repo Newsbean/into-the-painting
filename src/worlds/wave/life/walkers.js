@@ -9,6 +9,7 @@ import * as THREE from 'three';
 import { Builder } from '../../../engine/build.js';
 import { Soup } from '../../../engine/soup.js';
 import { rng } from '../../../engine/gl.js';
+import { weld } from '../../../engine/weld.js';
 import { trace } from '../../../engine/plan.js';
 import { edoPerson } from '../edo/people.js';
 import { edoStreets } from '../edo/town.js';
@@ -35,12 +36,12 @@ function figures(R) {
     const S = new Soup();
     edoPerson(S, { x: 0, y: 0, z: 0, ry: 0, R, ...o });
     extra?.(S);
-    return S.geometry();
+    return weld(S.geometry());
   };
   const built = (fn) => {
     const B = new Builder();
     fn(B);
-    return B.geometry();
+    return weld(B.geometry());
   };
   const retainer = { kind: 'townsman', robe: LIVERY, sash: CREAM, hat: 'jingasa' };
   return {

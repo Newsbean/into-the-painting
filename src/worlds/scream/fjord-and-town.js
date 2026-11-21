@@ -81,5 +81,5 @@ export function addPeople(world, kit) {
   const fr = cs[78];
   for (const [ox, oz] of [[-0.6, 0.3], [0.5, -0.3]]) figure(P, fr.x + ox, H(fr.x + ox, fr.z + oz), fr.z + oz, -1.95, { coat: 0x17171f, legs: 0x15151c, skin: 0xcdb090, hat: 'top', scale: 1.08 });
   for (const [x, z, ry] of [[-160, -72, 1], [-176, -80, -2], [-186, -68, 0.5], [TX + 14, -130, 3.1], [-150, -84, 2.2]]) figure(P, x, H(x, z), z, ry, { coat: [0x2a2a34, 0x4a2a2a, 0x2f3f4a][(R() * 3) | 0], dress: R() < 0.5, hat: R() < 0.5 ? 'top' : undefined });
-  S.add(P.mesh(wavy({ stroke: strokes.oil, scale: 0.8, warp: 0.1, rim: 0.25 })));
+  S.add(P.meshes(wavy({ stroke: strokes.oil, scale: 0.8, warp: 0.1, rim: 0.25 })));
 }

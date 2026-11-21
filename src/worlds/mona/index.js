@@ -132,7 +132,7 @@ export class MonaWorld extends World {
     buildMill(this, kit);
     buildFlyingMachine(this, kit);
     // all the stone and timber so far, as one mesh
-    S.add(B.mesh(soft({ scale: 0.3, emissive: 1.5, big: 0.25, hueVar: 0.05, contrast: 0.14 })));
+    S.add(B.meshes(soft({ scale: 0.3, emissive: 1.5, big: 0.25, hueVar: 0.05, contrast: 0.14 })));
 
     buildFlyers(this, kit);
     // ---------------- cypress avenues, olives, vineyards, the far rocks

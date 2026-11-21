@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { Soup } from './soup.js';
+import { weld } from './weld.js';
 
 // A Kit gathers one chunk of something built (a block of town, a row of houses, a temple
 // precinct) into a few merged meshes, one per material, plus the instanced parts that
@@ -38,7 +39,8 @@ export class Kit {
     const c = new THREE.Color();
     for (const [name, list] of Object.entries(this.placed)) {
       const part = this.lib[name];
-      const im = new THREE.InstancedMesh(part.geometry, this.mats[part.material ?? 'detail'], list.length);
+      // a part is drawn hundreds of times over, so every vertex saved in it is saved that often
+      const im = new THREE.InstancedMesh(weld(part.geometry), this.mats[part.material ?? 'detail'], list.length);
       list.forEach(([m, col], i) => {
         im.setMatrixAt(i, m);
         im.setColorAt(i, c.set(col));

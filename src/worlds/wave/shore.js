@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { Builder, terrain, house, pine, mix } from '../../engine/build.js';
+import { Builder, terrain, tiles, house, pine, mix } from '../../engine/build.js';
 import { vnoise, fbm, smooth, lerp } from '../../engine/gl.js';
 import { keptClear } from './ground-plan.js';
 import { machiya, rngAt } from './edo/house.js';
@@ -35,7 +35,8 @@ export function addShore(world, { R, S, H, maps, flat, proxy }) {
     -60,
     300
   );
-  S.add(new THREE.Mesh(land, flat({ scale: 0.03 })));
+  // in tiles, so the land behind you is not drawn; and without the sea bed, which nobody sees
+  S.add(tiles(land, flat({ scale: 0.03 }), { n: 6, below: -1.6 }));
 
   const B = new Builder();
   // Hokusai's workshop and a few neighbours

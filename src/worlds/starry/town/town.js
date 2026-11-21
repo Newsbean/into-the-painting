@@ -5,8 +5,9 @@
 //   world.scene.add(town.group);   each frame: town.tick(camera.position)
 //
 // The houses are gathered into chunks of about a block. Each chunk is a few merged
-// meshes (always drawn when in view) plus its instanced details (window surrounds,
-// shutters, doors, shopfronts, lamp posts), which are only switched on near the camera.
+// meshes plus its instanced details (window surrounds, shutters, doors, shopfronts, lamp
+// posts), which are only switched on near the camera. Further off still, the whole chunk
+// gives way to plain stand-ins for its houses (house.js draws both).
 // Lab: /?debug&bare&lab=worlds/starry/town/district.js
 import * as THREE from 'three';
 import { Builder, ribbon, patch, mix, xf } from '../../../engine/build.js';
@@ -28,7 +29,10 @@ export function buildTown(world, o) {
   const chunkOf = (x, z) => {
     const k = Math.floor(x / CHUNK) + ':' + Math.floor(z / CHUNK);
     let c = chunks.get(k);
-    if (!c) chunks.set(k, (c = { kit: new Kit(mats), sx: 0, sz: 0, n: 0, pts: [] }));
+    if (!c) {
+      chunks.set(k, (c = { kit: new Kit(mats), sx: 0, sz: 0, n: 0, pts: [] }));
+      c.kit.far = new Kit(mats); // the stand-ins for far away
+    }
     c.sx += x;
     c.sz += z;
     c.n++;
@@ -110,20 +114,23 @@ export function buildTown(world, o) {
 
   // ---------------------------------------------------------------- finish
   const group = new THREE.Group();
-  if (SB.parts.length) group.add(SB.mesh(mats.cobble));
+  if (SB.parts.length) group.add(SB.meshes(mats.cobble, 150));
   const list = [];
   let tris = 0;
   for (const c of chunks.values()) {
-    const b = c.kit.build();
+    const b = c.kit.build(),
+      fb = c.kit.far.build();
     const x = c.sx / c.n,
       z = c.sz / c.n;
     let r = 0;
     for (const [px, pz] of c.pts) r = Math.max(r, Math.hypot(px - x, pz - z));
-    group.add(b.base, b.detail);
-    list.push({ detail: b.detail, x, z, r: r + 8 });
+    fb.base.visible = false; // until tick() says the chunk is far off
+    group.add(b.base, b.detail, fb.base);
+    list.push({ base: b.base, far: fb.base, detail: b.detail, x, z, r: r + 8 });
     tris += b.tris;
   }
-  const range = o.detailRange ?? 130;
+  const range = o.detailRange ?? 105,
+    farRange = o.farRange ?? 170;
   return {
     group,
     lots,
@@ -134,7 +141,12 @@ export function buildTown(world, o) {
     stats: { houses: lots.length, lamps: nLamps, chunks: list.length, triangles: Math.round(tris) },
     // switch the fine detail on only where it can be seen
     tick(cam) {
-      for (const c of list) c.detail.visible = Math.hypot(cam.x - c.x, cam.z - c.z) < range + c.r;
+      for (const c of list) {
+        const dist = Math.hypot(cam.x - c.x, cam.z - c.z);
+        c.detail.visible = dist < range + c.r;
+        c.base.visible = dist < farRange + c.r;
+        c.far.visible = !c.base.visible;
+      }
     },
   };
 }

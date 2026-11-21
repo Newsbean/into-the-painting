@@ -4,6 +4,7 @@ import * as THREE from 'three';
 import { G, COMMON_GLSL } from '../../../engine/paint.js';
 import { Builder, xf } from '../../../engine/build.js';
 import { rng } from '../../../engine/gl.js';
+import { weld } from '../../../engine/weld.js';
 import { rod } from '../helpers.js';
 import { person } from '../figures.js';
 
@@ -172,7 +173,7 @@ export function addSailBoats(world, { S, flat }) {
   const geo = [false, true].map((striped) => {
     const B = new Builder();
     coaster(B, striped);
-    return B.geometry();
+    return weld(B.geometry());
   });
   // each beats up and down its own stretch of water: [centre x, z, reach in x, in z, turns per second, where it starts]
   const runs = [

@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { gridGeo, mix, jitter, xf } from '../../engine/build.js';
 import { vnoise, clamp, lerp } from '../../engine/gl.js';
+import { weld } from '../../engine/weld.js';
 import { WARM, PETAL, VINE, BLOSSOM, FARM_WALL, FARM_ROOF } from './palette.js';
 
 // ------------------------------------------------------------------
@@ -45,7 +46,7 @@ export class Raw {
     return g;
   }
   mesh(material) {
-    const m = new THREE.Mesh(this.geometry(), material);
+    const m = new THREE.Mesh(weld(this.geometry()), material);
     m.frustumCulled = false;
     return m;
   }

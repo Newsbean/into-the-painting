@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { waterMaterial } from '../../engine/paint.js';
-import { Builder, terrain, ribbon, mountainRing, mix, xf } from '../../engine/build.js';
+import { Builder, terrain, tiles, ribbon, mountainRing, mix, xf } from '../../engine/build.js';
 import { fbm, vnoise, smooth, clamp } from '../../engine/gl.js';
 import { dust } from './palette.js';
 
@@ -16,7 +16,7 @@ export function buildLand(world, kit) {
     if (y > 30 && Math.hypot(x - 122, z + 44) < 60) c.lerp(new THREE.Color(0x6a6658), 0.8);
     return c;
   };
-  S.add(new THREE.Mesh(terrain(H, 520, 250, groundCol, 0.7, 2.2, 0, -80), soft({ stroke: strokes.dab, scale: 0.12, contrast: 0.3, hueVar: 0.25, big: 0.7 })));
+  S.add(tiles(terrain(H, 520, 250, groundCol, 0.7, 2.2, 0, -80), soft({ stroke: strokes.dab, scale: 0.12, contrast: 0.3, hueVar: 0.25, big: 0.7 }), { n: 6 }));
 
   const wg = new THREE.PlaneGeometry(1600, 1600, 40, 40);
   wg.rotateX(-Math.PI / 2);
@@ -36,7 +36,7 @@ export function buildRoads(world, kit) {
   for (const r of [roadA, roadC]) RB.parts.push(ribbon(r, 4.4, H, dust, { lift: 0.14, across: 4 }));
   RB.parts.push(ribbon(roadB.slice(0, 3), 4.2, H, dust, { lift: 0.14, across: 4 }));
   RB.parts.push(ribbon(roadB.slice(3), 4.2, H, dust, { lift: 0.14, across: 4 }));
-  S.add(RB.mesh(soft({ stroke: strokes.dab, scale: 0.3, contrast: 0.36 })));
+  S.add(RB.meshes(soft({ stroke: strokes.dab, scale: 0.3, contrast: 0.36 })));
   const roadSamples = [];
   for (const r of [roadA, roadB, roadC]) {
     const c = new THREE.CatmullRomCurve3(r.map((p) => new THREE.Vector3(p[0], 0, p[1])));
@@ -69,7 +69,7 @@ export function buildFarRocks(world, kit) {
     geo.computeVertexNormals();
     RK.add(geo, (px, py) => mix(0x4a5a52, 0x8aa09a, clamp(py / hh + 0.5)), xf(x, H(x, z) + hh / 2 - 4, z));
   }
-  S.add(RK.mesh(soft({ scale: 0.03, contrast: 0.5, rim: 0, big: 0.4, wallStretch: 0.5 })));
+  S.add(RK.meshes(soft({ scale: 0.03, contrast: 0.5, rim: 0, big: 0.4, wallStretch: 0.5 })));
   const far = mountainRing({
     radius: 560,
     base: -6,

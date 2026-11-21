@@ -107,7 +107,7 @@ export class PearlWorld extends World {
     addCanalBoats(this, kit);
     addWindmill(this, kit);
     addHouse(this, kit);
-    S.add(B.mesh(soft({ stroke: strokes.soft, scale: 0.3, contrast: 0.2, hueVar: 0.16, emissive: 2.3 })));
+    S.add(B.meshes(soft({ stroke: strokes.soft, scale: 0.3, contrast: 0.2, hueVar: 0.16, emissive: 2.3 })));
 
     addShafts(this, kit);
     addGirl(this, kit);

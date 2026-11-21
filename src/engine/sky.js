@@ -58,11 +58,12 @@ export class Sky {
         }`,
       side: THREE.BackSide,
       depthWrite: false,
-      depthTest: false,
     });
     this.mesh = new THREE.Mesh(new THREE.SphereGeometry(1, 48, 24), domeMat);
     this.mesh.frustumCulled = false;
-    this.mesh.renderOrder = -1000;
+    // The dome sits exactly at the far plane and is drawn after everything solid, so the sky
+    // is only worked out for the pixels where it actually shows.
+    this.mesh.renderOrder = 1000;
 
     this.bakeMat = new THREE.ShaderMaterial({
       uniforms: this.uniforms,

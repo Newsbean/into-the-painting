@@ -157,7 +157,7 @@ export function village(world, kit) {
       maps.blob(x, z, 3.4, 0.4);
       planted++;
     }
-    S.add(TT.mesh(paintMaterial({ stroke: strokes.wavy, scale: 0.16, contrast: 0.7, hueVar: 0.8, warp: 0.5, accent: 0xb9d06a, accentAmt: 0.3, impasto: 0.16, rim: 0.3, band: 0.26, wallStretch: 0.5, angle: 1.57 })));
+    S.add(TT.meshes(paintMaterial({ stroke: strokes.wavy, scale: 0.16, contrast: 0.7, hueVar: 0.8, warp: 0.5, accent: 0xb9d06a, accentAmt: 0.3, impasto: 0.16, rim: 0.3, band: 0.26, wallStretch: 0.5, angle: 1.57 }), 150));
   }
 
   world.town = {

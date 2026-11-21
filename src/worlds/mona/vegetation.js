@@ -47,5 +47,5 @@ export function buildVegetation(world, kit) {
         if (y < 1.6 || nearRoad(x, z, 3)) continue;
         T.ball(1.0, mix(0x4a6a2a, 0x9aa83a, R()), x, y + 0.6, z, 1.25, 0.75, 0.7, 0, { sway: 0.08 });
       }
-  S.add(T.mesh(soft({ stroke: strokes.dab, scale: 0.3, contrast: 0.5, hueVar: 0.4, rim: 0.2 })));
+  S.add(T.meshes(soft({ stroke: strokes.dab, scale: 0.3, contrast: 0.5, hueVar: 0.4, rim: 0.2 })));
 }

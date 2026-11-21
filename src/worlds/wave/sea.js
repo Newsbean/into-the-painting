@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { paintMaterial, waterMaterial } from '../../engine/paint.js';
-import { Builder, pine, figure, mix, xf } from '../../engine/build.js';
+import { Builder, tiles, pine, figure, mix, xf } from '../../engine/build.js';
 import { matsu } from './plants.js';
 import { rngAt } from './edo/house.js';
 import { clamp } from '../../engine/gl.js';
@@ -15,10 +15,8 @@ export function addSea(world, { S, strokes }) {
   const seaGeo = new THREE.PlaneGeometry(3200, 3200, 220, 220);
   seaGeo.rotateX(-Math.PI / 2);
   world.seaMat = waterMaterial({ stroke: strokes.wood, deep: 0x7f9aa8, shallow: 0xb9cfd0, reflect: 0xb9cfd0, foam: FOAM, scale: 0.03, stripe: 0.88, glintAmt: 0, swell: 0.75, flow: 0.004, shore: 1, lace: 0.6 });
-  const sea = new THREE.Mesh(seaGeo, world.seaMat);
-  sea.position.y = 0;
-  sea.frustumCulled = false;
-  S.add(sea);
+  // in tiles, so the sea behind you is not drawn (the swell lifts it: leave the tiles room)
+  S.add(tiles(seaGeo, world.seaMat, { n: 5, pad: 3, order: 5 }));
   world.seaDeep = new THREE.Color(PRUSSIAN);
   world.seaPale = new THREE.Color(0x7f9aa8);
 }

@@ -119,7 +119,7 @@ export class ScreamWorld extends World {
     const B = (kit.B = new Builder());
     kit.cs = addRoad(this, kit);
     addTown(this, kit);
-    S.add(B.mesh(wavy({ stroke: strokes.oil, scale: 0.3, warp: 0.15, contrast: 0.45, hueVar: 0.4, emissive: 2.0, big: 0.5, wallStretch: 0.6 })));
+    S.add(B.meshes(wavy({ stroke: strokes.oil, scale: 0.3, warp: 0.15, contrast: 0.45, hueVar: 0.4, emissive: 2.0, big: 0.5, wallStretch: 0.6 })));
 
     addTrees(this, kit);
     addPeople(this, kit);

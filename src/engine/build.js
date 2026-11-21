@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
+import { weld } from './weld.js';
 import { rng, vnoise, fbm, lerp, clamp } from './gl.js';
 
 // Everything in the game is built from code. A Builder collects tinted
@@ -126,8 +127,10 @@ export class Builder {
     this.parts.length = 0;
     return g;
   }
+  // (mesh() and meshes() weld what they draw: see weld.js. geometry() leaves it loose, so
+  // that it can still be merged into something else.)
   mesh(material) {
-    const m = new THREE.Mesh(this.geometry(), material);
+    const m = new THREE.Mesh(weld(this.geometry()), material);
     m.frustumCulled = false;
     return m;
   }
@@ -146,7 +149,7 @@ export class Builder {
     this.parts.length = 0;
     const out = new THREE.Group();
     for (const a of cells.values()) {
-      const geo = mergeGeometries(a, false);
+      const geo = weld(mergeGeometries(a, false));
       geo.computeBoundingSphere();
       geo.boundingSphere.radius += 3; // room for things that sway
       const m = new THREE.Mesh(geo, material);
@@ -170,7 +173,51 @@ export function terrain(heightAt, extent, seg, colorFn, focus = 0.7, pow = 2.3, 
     p.setXYZ(i, x, heightAt(x, z), z);
   }
   g.computeVertexNormals();
-  return tint(g, (x, y, z) => colorFn(x, z, y));
+  // (welded: one vertex to a crossing of the grid, not six)
+  return weld(tint(g, (x, y, z) => colorFn(x, z, y)));
+}
+
+// Cut one big indexed surface (a terrain, a sea) into a grid of meshes that share its
+// vertices, so that the parts out of view are not drawn at all. They are drawn late
+// (`order`), after the things that stand on them, so the ground hidden behind a house is
+// never painted.
+//   n      tiles each way
+//   below  leave out triangles that lie wholly under this height (ground the sea covers)
+//   pad    room for vertices that move (a swell)
+export function tiles(geo, material, { n = 5, below = -Infinity, pad = 1, order = 4 } = {}) {
+  const P = geo.attributes.position,
+    I = geo.index.array;
+  geo.computeBoundingBox();
+  const b = geo.boundingBox,
+    sx = (b.max.x - b.min.x) / n || 1,
+    sz = (b.max.z - b.min.z) / n || 1;
+  const lists = Array.from({ length: n * n }, () => []);
+  for (let t = 0; t < I.length; t += 3) {
+    const a = I[t],
+      c = I[t + 1],
+      d = I[t + 2];
+    if (P.getY(a) < below && P.getY(c) < below && P.getY(d) < below) continue;
+    const i = Math.min(n - 1, Math.floor(((P.getX(a) + P.getX(c) + P.getX(d)) / 3 - b.min.x) / sx)),
+      j = Math.min(n - 1, Math.floor(((P.getZ(a) + P.getZ(c) + P.getZ(d)) / 3 - b.min.z) / sz));
+    lists[j * n + i].push(a, c, d);
+  }
+  const out = new THREE.Group(),
+    box = new THREE.Box3(),
+    v = new THREE.Vector3();
+  for (const list of lists) {
+    if (!list.length) continue;
+    const g = new THREE.BufferGeometry();
+    for (const name of Object.keys(geo.attributes)) g.setAttribute(name, geo.attributes[name]);
+    g.setIndex(list);
+    box.makeEmpty();
+    for (const k of list) box.expandByPoint(v.fromBufferAttribute(P, k));
+    g.boundingSphere = box.getBoundingSphere(new THREE.Sphere());
+    g.boundingSphere.radius += pad;
+    const m = new THREE.Mesh(g, material);
+    m.renderOrder = order;
+    out.add(m);
+  }
+  return out;
 }
 
 // a path laid over the ground: points [[x,z],...]

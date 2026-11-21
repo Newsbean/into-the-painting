@@ -320,6 +320,14 @@ export class World {
     this.maps?.apply();
     this.syncUniforms();
     pipeline?.applyStyle(this.style);
+    // Solid things can be drawn in any order and look the same, but not cost the same: water
+    // is drawn after what stands in it, so that what is hidden under a boat is never painted.
+    if (!this._ordered) {
+      this._ordered = true;
+      this.scene.traverse((o) => {
+        if (o.isMesh && o.renderOrder === 0 && o.material?.uniforms?.uGlintAmt) o.renderOrder = 5;
+      });
+    }
   }
   syncUniforms() {
     for (let i = 0; i < 8; i++) {

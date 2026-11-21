@@ -12,7 +12,7 @@ export function addRoad(world, kit) {
   const RB = new Builder();
   RB.parts.push(ribbon(pts, 6.4, H, (x, y, z) => mix(0x6a4428, 0xa8743a, vnoise(x * 0.2, z * 0.2)).lerp(new THREE.Color(0x4a4468), vnoise(x * 0.07 + 3, z * 0.07) * 0.45), { lift: 0.16, across: 4 }));
   RB.parts.push(patch(-172, -74, 30, H, (x, y, z) => mix(0x7a6a5a, 0xa08a6a, vnoise(x * 0.3, z * 0.3)), { lift: 0.14, wobble: 0.08 }));
-  S.add(RB.mesh(wavy({ scale: 0.12, warp: 0.25, angle: 1.2, contrast: 0.5 })));
+  S.add(RB.meshes(wavy({ scale: 0.12, warp: 0.25, angle: 1.2, contrast: 0.5 })));
 
   const curve = new THREE.CatmullRomCurve3(pts.map((p) => new THREE.Vector3(p[0], 0, p[1])), false, 'catmullrom', 0.5);
   const cs = curve.getSpacedPoints(160);

@@ -516,11 +516,33 @@ export class Game {
     this.pipeline.render(w.scene, cam, null);
   }
 
+  // ?debug: frames a second and how much is being drawn, in the corner of the screen.
+  // (Trust it only while the game is on screen: a hidden or covered page is slowed down.)
+  perfMeter() {
+    const el = document.createElement('div');
+    el.style.cssText = 'position:fixed;left:8px;bottom:8px;z-index:50;font:11px/1.35 ui-monospace,Consolas,monospace;color:#fff;background:rgba(0,0,0,.55);padding:3px 7px;border-radius:4px;pointer-events:none;white-space:pre';
+    document.body.appendChild(el);
+    let t = 0,
+      n = 0,
+      worst = 0;
+    return (ms) => {
+      t += ms;
+      n++;
+      worst = Math.max(worst, ms);
+      if (t < 500) return;
+      const s = this.pipeline.stats;
+      el.textContent = `${Math.round((1000 * n) / t)} fps  ${(t / n).toFixed(1)} ms (worst ${worst.toFixed(0)})\n${Math.round(s.triangles / 1000)}k triangles  ${s.calls} draws  ${this.rw}x${this.rh}`;
+      t = n = worst = 0;
+    };
+  }
+
   run() {
     let last = performance.now();
+    const meter = this.noAdapt ? this.perfMeter() : null;
     const loop = (now) => {
       const ms = now - last;
       last = now;
+      meter?.(ms);
       // paused while a film is being rendered frame by frame from the debug hooks
       if (!this.paused) this.frame(ms / 1000);
       if (this.mode === 'play' && !this.noAdapt && !this.paused) this.adaptQuality(ms);

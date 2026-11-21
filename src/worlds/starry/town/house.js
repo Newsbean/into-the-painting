@@ -105,6 +105,11 @@ export function house(kit, world, o) {
   };
   const BASE = -1.4; // walls go into the ground so a slope never shows daylight under them
 
+  // (kit.far, when the town gives one, collects a plain stand-in for this house to be drawn
+  // from far away: see the end of this function. It takes no dice.)
+  const farOps = kit.far ? [] : null,
+    farStacks = [];
+
   // ---------------------------------------------------------------- one opening, finished
   const finish = (Fc, op, fine) => {
     const ow = op.x1 - op.x0,
@@ -116,6 +121,7 @@ export function house(kit, world, o) {
     else warm.multiplyScalar(0.7 + R() * 0.6);
     const glow = (x, y) => _t.copy(warm).multiplyScalar(op.lit ? lerp(1.12, 0.74, clamp((y - op.y0) / oh)) : 1);
     const em = op.lit ? 1 : 0;
+    if (farOps && (Fc === F.front || Fc === F.back || Fc === F.left || Fc === F.right)) farOps.push(op.kind === 'door' ? [Fc, op, new THREE.Color(0x10131f), 0] : [Fc, op, warm.clone(), em]);
     if (op.kind === 'door') {
       // only the fanlight is glass; the leaves come with the part
       pane(det, Fc, op.x0, op.x1, op.y0 + oh * 0.845, op.y1, -depth, glow, { em });
@@ -439,12 +445,37 @@ export function house(kit, world, o) {
     const cw = 0.62 + R() * 0.3,
       cd = 0.5;
     cuboid(wall, [cx - cw / 2, yBase, cz - cd / 2], [cx + cw / 2, top, cz + cd / 2], (x, y, z) => _t.copy(wc).multiplyScalar(0.8), undefined, 'b');
+    if (farOps) farStacks.push([cx, cz, cw, cd, yBase, top]);
     cuboid(det, [cx - cw / 2 - 0.07, top, cz - cd / 2 - 0.07], [cx + cw / 2 + 0.07, top + 0.12, cz + cd / 2 + 0.07], stoneTrim, undefined, '');
     for (const px of cw > 0.75 ? [-0.17, 0.17] : [0]) det.add(pot, 0xb8562e, new THREE.Matrix4().makeTranslation(cx + px, top + 0.33, cz));
   }
   wall.set(null).warp(null);
   det.set(null).warp(null);
   roof.set(null).warp(null);
+
+  // ---------------------------------------------------------------- the same house, for far away
+  // A block of the right size and colours with its windows painted on: a few dozen triangles
+  // where the real one has a thousand. The town swaps a whole block of houses for these once
+  // it is too far off to tell the difference (town.js).
+  if (kit.far) {
+    const fw = kit.far.s(st.wallMat).set(M).warp(null).facing([0, 1, 0]);
+    for (const name of ['front', 'back', 'left', 'right']) {
+      const Fc = F[name];
+      fw.quad(at(Fc, 0, BASE), at(Fc, Fc.W, BASE), at(Fc, Fc.W, wallTop), at(Fc, 0, wallTop), wallCol);
+      if (gableFront === (name === 'front' || name === 'back')) fw.tri(at(Fc, 0, wallTop), at(Fc, Fc.W, wallTop), at(Fc, Fc.W / 2, ridgeY - 0.06), wallCol);
+    }
+    // the chimney stacks keep the skyline
+    fw.facing(null).set(Mr);
+    for (const [cx, cz, cw, cd, yBase, top] of farStacks) cuboid(fw, [cx - cw / 2, yBase, cz - cd / 2], [cx + cw / 2, top + 0.3, cz + cd / 2], (x, y, z) => _t.copy(wc).multiplyScalar(0.8), undefined, 'b');
+    fw.set(null);
+    const fr = kit.far.s(st.roofMat).set(Mr).warp(null).facing([0, hW - 40, 0]);
+    const L = RW / 2 + 0.3;
+    for (const sgn of [-1, 1]) fr.quad([-L, hW, sgn * run], [L, hW, sgn * run], [L, ridgeY, 0], [-L, ridgeY, 0], roofCol);
+    fr.facing(null).set(null);
+    const fp = kit.far.s('detail').set(M).warp(null).facing([0, 1, 0]);
+    for (const [Fc, op, col, em] of farOps) fp.quad(at(Fc, op.x0, op.y0, 0.15), at(Fc, op.x1, op.y0, 0.15), at(Fc, op.x1, op.y1, 0.15), at(Fc, op.x0, op.y1, 0.15), col, { em });
+    fp.facing(null).set(null);
+  }
 
   return { hW, top: ridgeY, gableFront };
 }

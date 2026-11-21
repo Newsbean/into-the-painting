@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { paintMaterial } from '../../engine/paint.js';
-import { Builder, terrain, ribbon, patch, mountainRing, mix } from '../../engine/build.js';
+import { Builder, terrain, tiles, ribbon, patch, mountainRing, mix } from '../../engine/build.js';
 import { fbm, vnoise, smooth, clamp, lerp } from '../../engine/gl.js';
 import { FIELD } from './palette.js';
 import { townWeight, townLevel, inTown } from './town/layout.js';
@@ -132,9 +132,7 @@ export function ground(world, { S, H, strokes, mats }) {
     return c;
   };
   const groundMat = paintMaterial({ stroke: strokes.oil, scale: 0.052, contrast: 0.55, hueVar: 0.75, warp: 0.85, accent: 0xb9c95a, accentAmt: 0.3, impasto: 0.1, rim: 0.05, band: 0.3 });
-  const ground = new THREE.Mesh(terrain(H, 1000, 330, groundCol, 0.74, 2.2, CENTER[0], CENTER[1] - 10), groundMat);
-  ground.frustumCulled = false;
-  S.add(ground);
+  S.add(tiles(terrain(H, 1000, 330, groundCol, 0.74, 2.2, CENTER[0], CENTER[1] - 10), groundMat, { n: 7 }));
 
   // cobbles: lilac, rose and blue like a lamplit terrace
   const cob = (x, y, z) => mix(0x6c5fa6, 0xa57cb6, vnoise(x * 0.35, z * 0.35)).lerp(new THREE.Color(0x4a5cae), vnoise(x * 0.11 + 7, z * 0.11) * 0.5);
@@ -142,7 +140,7 @@ export function ground(world, { S, H, strokes, mats }) {
   for (const r of ROADS) roadB.parts.push(ribbon(r.pts, r.w, H, cob, { lift: 0.13, across: 4 }));
   roadB.parts.push(patch(10, -32, 15, H, cob, { lift: 0.15, wobble: 0.06 }));
   roadB.parts.push(patch(78, 44, 13, H, (x, y, z) => mix(0x9a8a6a, 0xc7b58a, vnoise(x * 0.3, z * 0.3)), { lift: 0.14, wobble: 0.1 }));
-  S.add(roadB.mesh(mats.cobble));
+  S.add(roadB.meshes(mats.cobble, 150));
 }
 
 // ---------------- the Alpilles

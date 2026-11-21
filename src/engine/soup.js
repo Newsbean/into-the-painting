@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { weld } from './weld.js';
 
 // A Soup collects flat-shaded triangles straight into arrays. It is the fast
 // path for things made of thousands of small faces (a town's worth of walls,
@@ -202,7 +203,7 @@ export class Soup {
   }
   // culled: let three skip it when it is off screen (give static town chunks this)
   mesh(material, culled = true) {
-    const m = new THREE.Mesh(this.geometry(), material);
+    const m = new THREE.Mesh(weld(this.geometry()), material);
     m.frustumCulled = culled;
     return m;
   }

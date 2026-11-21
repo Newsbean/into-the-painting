@@ -51,8 +51,9 @@ src/
     paint.js           the paint shader (brushwork, sketch-to-colour, lamplight)
     strokes.js         brush atlases: oil, dab, wavy, soft, wood
     built.js           brush atlases for built surfaces: masonry, ashlar, brick, tiles, slate, cobble, plank
-    build.js           Builder: merge tinted boxes, cylinders, roofs, trees into one mesh
+    build.js           Builder: merge tinted boxes, cylinders, roofs, trees into one mesh; terrain(), tiles()
     soup.js            Soup: the fast path for thousands of small faces (walls, reveals, roofs)
+    weld.js            weld(): joins the corners loose triangles share, so less is sent to the graphics card
     facade.js          walls with openings, reveals, slabs: the pieces of any facade
     kit.js             Kit: a block of buildings as a few merged meshes plus instanced details
     plan.js            town planning: rows of lots along both sides of every street

@@ -249,6 +249,7 @@ export class Pipeline {
       uFlash: { value: 0 },
     });
     this.flash = 0;
+    this.stats = { calls: 0, triangles: 0 }; // what the scene took to draw, last frame
     this.setSize(w, h);
   }
 
@@ -317,6 +318,8 @@ export class Pipeline {
     r.setRenderTarget(this.scene);
     r.clear();
     r.render(scene, camera);
+    this.stats.calls = r.info.render.calls;
+    this.stats.triangles = r.info.render.triangles;
 
     // bloom
     const mips = this.mips,

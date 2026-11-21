@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { Builder, terrain, mountainRing, blobTree, pine, mix } from '../../engine/build.js';
+import { Builder, terrain, tiles, mountainRing, blobTree, pine, mix } from '../../engine/build.js';
 import { fbm, vnoise, smooth, clamp } from '../../engine/gl.js';
 
 // The lie of the land: the hillside the road runs along, its trees, the far
@@ -16,7 +16,7 @@ export function addLand(world, kit) {
     if (y < 2.2) c.lerp(new THREE.Color(0x6a5a4a), smooth(2.2, 0.2, y));
     return c;
   };
-  S.add(new THREE.Mesh(terrain(H, 480, 240, groundCol, 0.7, 2.2, -40, -40), wavy({ scale: 0.06, angle: 0.5 })));
+  S.add(tiles(terrain(H, 480, 240, groundCol, 0.7, 2.2, -40, -40), wavy({ scale: 0.06, angle: 0.5 }), { n: 6 }));
 }
 
 // ---------------- trees: birches by the road, dark spruce up the hill
@@ -47,7 +47,7 @@ export function addTrees(world, kit) {
     if (-dn < 60) world.colliders.push({ x, z, r: 0.5, top: y + hh * 0.5 });
     n++;
   }
-  S.add(T.mesh(wavy({ scale: 0.18, warp: 0.4, rim: 0.3, wallStretch: 0.5, angle: 1.57 })));
+  S.add(T.meshes(wavy({ scale: 0.18, warp: 0.4, rim: 0.3, wallStretch: 0.5, angle: 1.57 })));
 }
 
 // ---------------- far shore

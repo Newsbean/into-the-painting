@@ -262,13 +262,15 @@ export function addWaves(world, { R, S, strokes }) {
   world.crest = [gw.crest[0] + WX, gw.crest[1], gw.crest[2] + WZ];
   world.greatMesh = new THREE.Mesh(GG.geometry(), waveMaterial({ stroke: strokes.wood, surge: [1.5, 1, 0, 0.55], pulse: 1, curl: 0.16 }));
   world.greatMesh.position.set(WX, 0, WZ);
-  world.greatMesh.frustumCulled = false;
+  world.greatMesh.geometry.boundingSphere.radius += 12; // it leans and breathes: leave room, and let it be skipped when out of sight
   S.add(world.greatMesh);
 
-  const WG = new WaveGeo();
+  // the lesser waves are gathered by quarter of the sea, so that those behind you are not drawn
+  const quarters = [0, 1, 2, 3].map(() => new WaveGeo());
+  const quarter = (x, z) => quarters[(x >= 0 ? 1 : 0) + (z >= -30 ? 2 : 0)];
   // a second swell rising in front, shaped like the mountain it hides
   burn(R, 20, true);
-  wave(WG, { x: -40, z: 74, ry: 0.22, H: 13, len: 60, rows: 28, cols: 36, claws: 12, big: 0.5, seed: 7 });
+  wave(quarter(-40, 74), { x: -40, z: 74, ry: 0.22, H: 13, len: 60, rows: 28, cols: 36, claws: 12, big: 0.5, seed: 7 });
   // and a whole sea of them, so there is always another crest to walk towards
   const seaWaves = [[72, -70, -0.3, 11], [108, 16, 0.4, 8], [-96, 96, 0.2, 9], [48, 100, -0.2, 5], [136, -150, 0.1, 12], [-128, -150, -0.2, 15], [150, 84, 0.5, 7], [-170, 20, -0.1, 12], [200, -40, 0.2, 10], [-60, -190, 0.1, 17], [-10, -260, -0.2, 12]];
   for (let i = 0; i < 38; i++) {
@@ -281,11 +283,15 @@ export function addWaves(world, { R, S, strokes }) {
   }
   seaWaves.forEach(([x, z, ry, h], i) => {
     burn(R, 10 + Math.round(h * 0.7), false);
-    wave(WG, { x, z, ry, H: h, len: 40 + h * 4, rows: 16, cols: 36, claws: 5 + Math.round(h * 0.4), seed: 100 + i });
+    wave(quarter(x, z), { x, z, ry, H: h, len: 40 + h * 4, rows: 16, cols: 36, claws: 5 + Math.round(h * 0.4), seed: 100 + i });
   });
-  const seaMesh = new THREE.Mesh(WG.geometry(), waveMaterial({ stroke: strokes.wood, surge: [2.2, 1, 0, 0.55], pulse: 1 }));
-  seaMesh.frustumCulled = false;
-  S.add(seaMesh);
+  const seaMat = waveMaterial({ stroke: strokes.wood, surge: [2.2, 1, 0, 0.55], pulse: 1 });
+  for (const q of quarters) {
+    if (!q.count) continue;
+    const m = new THREE.Mesh(q.geometry(), seaMat);
+    m.geometry.boundingSphere.radius += 8;
+    S.add(m);
+  }
 
   // spindrift torn off the crest once it stands: it rides with the wave, so it is the wave's child
   for (let i = 0; i < 440; i++) R();

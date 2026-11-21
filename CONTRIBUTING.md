@@ -73,21 +73,40 @@ the kit, and their fine detail should only be switched on near the camera: see
 
 ## Keep it fast
 
-The game has to hold up on an ordinary laptop with integrated graphics. On the machine it
-is tuned on, one frame at 1280x720 takes about 24 ms, and the whole town of the Starry
-Night is about 4 ms of that. If you add a lot of geometry, measure before and after in
-the console of a `?debug&film&only=<world>` page:
+The game has to hold up on an ordinary laptop with integrated graphics. There, what
+costs is not the paint filter but how much is drawn: the number of triangles in a frame,
+and how many times the vertex program runs. Open any page with `?debug` and the corner
+of the screen shows frames a second, triangles and draw calls for the frame. (Trust the
+frames a second only while the game is actually on screen: browsers slow down a page
+that is hidden or covered.)
+
+As a guide, a frame of the Great Wave draws 350 to 700 thousand triangles, and the
+Starry Night 250 thousand in the fields and about a million in the middle of town. If
+something you add moves those numbers a lot, look at these first:
+
+- **Weld it.** Everything is built as loose triangles, and `weld()` (`engine/weld.js`)
+  joins the corners they share. `Builder.mesh()`, `Builder.meshes()`, `Soup.mesh()`, the
+  kits and `terrain()` already do it. If you make a `THREE.Mesh` or an `InstancedMesh`
+  from a geometry yourself, pass the geometry through `weld()` last.
+- **Let it be skipped.** One huge mesh is always drawn, even when it is behind you. Use
+  `Builder.meshes()` rather than `mesh()` for anything spread over the land, `tiles()` for
+  a terrain or a sea, and `instances()` (`worlds/wave/life/raw.js`) for scattered things.
+- **Draw less of it far away.** Fine detail goes into a kit's instanced parts, which are
+  switched off beyond a hundred metres or so; a whole block of a town gives way to plain
+  stand-ins further off (`house.js` and `town.js` in `worlds/starry/town`).
+
+To time a frame by hand, in the console of a `?debug&film&only=<world>` page:
 
 ```js
 film.setup(1280, 720);
 const gl = __game.renderer.getContext(), px = new Uint8Array(4);
-const t0 = performance.now();
-for (let i = 0; i < 20; i++) { __game.frame(1 / 30); gl.readPixels(0, 0, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, px); }
-console.log(((performance.now() - t0) / 20).toFixed(1), 'ms a frame');
+let best = 1e9;
+for (let i = 0; i < 30; i++) { const t0 = performance.now(); __game.frame(1 / 30); gl.readPixels(0, 0, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, px); best = Math.min(best, performance.now() - t0); }
+console.log(best.toFixed(1), 'ms a frame at best');
 ```
 
 (The `readPixels` makes the browser wait for the graphics card; without it the number
-means nothing.)
+means nothing. Take the best of many, with the page on screen.)
 
 ## What belongs in the game
 

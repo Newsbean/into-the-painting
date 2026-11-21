@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { Builder, terrain, ribbon, patch, mountainRing, blobTree, house, figure, mix, jitter, xf } from '../../engine/build.js';
+import { Builder, terrain, tiles, ribbon, patch, mountainRing, blobTree, house, figure, mix, jitter, xf } from '../../engine/build.js';
 import { fbm, vnoise, smooth, clamp } from '../../engine/gl.js';
 import { BRICK, ROOF } from './palette.js';
 
@@ -18,7 +18,7 @@ export function addGround(world, kit) {
     if (y < -0.4) c.lerp(new THREE.Color(0x5a4a3a), 0.7);
     return c;
   };
-  S.add(new THREE.Mesh(terrain((x, z) => world.baseH(x, z), 420, 230, groundCol, 0.72, 2.2), soft({ stroke: strokes.dab, scale: 0.3, contrast: 0.26, hueVar: 0.2 })));
+  S.add(tiles(terrain((x, z) => world.baseH(x, z), 420, 230, groundCol, 0.72, 2.2), soft({ stroke: strokes.dab, scale: 0.3, contrast: 0.26, hueVar: 0.2 }), { n: 6 }));
 }
 
 // canal houses: tall, narrow, stepped gables to the water
@@ -55,7 +55,7 @@ export function addMarket(world, kit) {
   const GB = new Builder();
   GB.parts.push(patch(MX, MZ, 23, H, (x, y, z) => mix(0xb8a480, 0xd6c098, vnoise(x * 0.4, z * 0.4)), { lift: 0.07, wobble: 0.05, sx: 1, sz: 0.9 }));
   GB.parts.push(ribbon([[-45, 16], [-45, 30]], 9, H, 0xbfa986, { lift: 0.06 }));
-  S.add(GB.mesh(soft({ stroke: strokes.dab, scale: 0.3, contrast: 0.5 })));
+  S.add(GB.meshes(soft({ stroke: strokes.dab, scale: 0.3, contrast: 0.5 })));
   const AWN = [0xb2452f, 0xe6d9b0, 0x2f5f8a, 0xd9a83a, 0x4a7a4a, 0xe6d9b0];
   const GOODS = [[0xe8c84a, 0xf0d870], [0xd9443a, 0xf0b0c0, 0xf2d04a], [0xb9c4cc, 0x8fa0aa], [0x9a5a2a, 0xc98a4a], [0x2f5fd0, 0xd9a83a, 0xb0362e, 0x3a8a5a, 0xf2f0e0]];
   world.stalls = [];
@@ -138,12 +138,12 @@ export function addTreesAndTownsfolk(world, kit) {
       z = Math.sin(a) * d * 1.0;
     blobTree(T, x, world.baseH(x, z), z, 9, 4 + R() * 3, R, { lo: 0x4a6a30, hi: 0xa8b04a, trunk: 0x4a3626, blobs: 3 });
   }
-  S.add(T.mesh(soft({ stroke: strokes.dab, scale: 0.3, contrast: 0.5, hueVar: 0.45, rim: 0.25 })));
+  S.add(T.meshes(soft({ stroke: strokes.dab, scale: 0.3, contrast: 0.5, hueVar: 0.45, rim: 0.25 })));
 
   const P = new Builder();
   const folk = [[-40, 40, 1], [-49, 48, -2], [-36, 50, 2.5], [-52, 38, 0.3], [-4, 13, 1.6], [20, 12, -1.5], [46, -14, 0.5], [-70, -12, 0], [70, 12, 3]];
   for (const [x, z, ry] of folk) figure(P, x, H(x, z), z, ry, { coat: [0x2a2a30, 0x4a3a2a, 0x2f4a5a, 0x7a2f2a][(R() * 4) | 0], dress: R() < 0.5, hat: R() < 0.6 ? 'top' : undefined, hatCol: 0x1a1a1e });
-  S.add(P.mesh(soft({ scale: 0.8, rim: 0.2 })));
+  S.add(P.meshes(soft({ scale: 0.8, rim: 0.2 })));
 }
 
 // distant polder: church spires and more mills on the horizon
