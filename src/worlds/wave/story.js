@@ -24,7 +24,7 @@ export function addStory(world, { H, strokes }) {
   world.setupStory({
     wisps: [
       { pos: [10, 3.2, 176], color: 0x2f6fd0, name: 'Indigo', fact: 'The wave belongs to Thirty-Six Views of Mount Fuji, a series Hokusai began at about seventy.' },
-      { pos: [14, H(14, 211) + 1.6, 211], color: 0xf0c060, name: 'Paper gold', fact: 'A print is pressed from several carved blocks, one for each colour: the outline first, then light blue, then deep blue.' },
+      { pos: [14, H(14, 211) + 1.6, 211], color: 0xf0c060, name: 'Paper gold', fact: 'A print is pressed from several carved blocks, one for each colour, the block of lines first. In this one even the lines are blue.' },
       { pos: [22, 3.2, 30], color: 0xe8b060, name: 'Boat ochre', fact: 'Its Japanese title means Under the Wave off Kanagawa. Three boats of rowers face the sea, heads down.' },
       { pos: [-40, 16, 74], color: 0xd8f0ff, name: 'Foam white', fact: 'Hokusai wrote that nothing he had drawn before seventy was worth counting.' },
       { pos: [174, 12, -22], color: 0x8fb8d8, name: 'Mountain grey', fact: 'Thousands of copies were printed. About a hundred originals survive today.', radius: 150 },

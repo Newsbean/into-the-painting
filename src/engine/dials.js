@@ -6,16 +6,19 @@
 //   if (dials(game, st, { title, rows: [{ label, options: [...] }], note })) { ...st.picks... }
 //
 // Returns true on the frame the player confirms. The player should be frozen meanwhile.
+// A puzzle with something to look at while choosing passes head: { h, draw(c, x, y, w) },
+// a band h tall between the note and the rows that it draws itself.
 const any = (game, codes) => codes.some((c) => game.pressed.has(c));
 
-export function dials(game, st, { title, rows, note = '' }) {
+export function dials(game, st, { title, rows, note = '', head = null }) {
   if (any(game, ['ArrowUp', 'KeyW'])) st.row = (st.row + rows.length - 1) % rows.length;
   if (any(game, ['ArrowDown', 'KeyS'])) st.row = (st.row + 1) % rows.length;
   const n = rows[st.row].options.length;
   if (any(game, ['ArrowLeft', 'KeyA'])) st.picks[st.row] = (st.picks[st.row] + n - 1) % n;
   if (any(game, ['ArrowRight', 'KeyD'])) st.picks[st.row] = (st.picks[st.row] + 1) % n;
   const W = 640,
-    H = 96 + rows.length * 62 + 46,
+    top = 96 + (head?.h ?? 0),
+    H = top + rows.length * 62 + 46,
     c = game.ui.mini(W, H);
   c.fillStyle = 'rgba(24, 20, 16, 0.94)';
   c.fillRect(0, 0, W, H);
@@ -26,8 +29,10 @@ export function dials(game, st, { title, rows, note = '' }) {
   c.font = '13px Georgia, serif';
   c.fillStyle = 'rgba(246, 239, 220, 0.7)';
   c.fillText(note, 28, 70);
+  head?.draw(c, 28, 86, W - 56);
+  c.textAlign = 'left';
   rows.forEach((r, i) => {
-    const y = 96 + i * 62,
+    const y = top + i * 62,
       on = i === st.row;
     if (on) {
       c.fillStyle = 'rgba(240, 210, 122, 0.14)';
