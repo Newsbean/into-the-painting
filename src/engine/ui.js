@@ -166,6 +166,24 @@ export class UI {
     $('resume').classList.toggle('show', on);
   }
 
+  // ---------- rings hung in the view, for a puzzle that lines the world up on them:
+  // [{ x, y, r (all in pixels), label, on }]. rings() takes them away.
+  rings(list = []) {
+    const box = $('rings');
+    const els = (this.ringEls ??= []);
+    while (els.length < list.length) els.push(box.appendChild(document.createElement('i')));
+    els.forEach((el, k) => {
+      const m = list[k];
+      el.style.opacity = m ? 1 : 0;
+      if (!m) return;
+      el.style.left = `${m.x}px`;
+      el.style.top = `${m.y}px`;
+      el.style.width = el.style.height = `${m.r * 2}px`;
+      el.dataset.label = m.label;
+      el.classList.toggle('on', !!m.on);
+    });
+  }
+
   // ---------- on-screen markers that point at what is left to find
   setMarkers(list, camera, w, h) {
     const box = $('markers');

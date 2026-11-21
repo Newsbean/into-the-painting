@@ -58,7 +58,7 @@ export function village(world, kit) {
   }
 
   // church: the steeple that pierces the horizon
-  church(lk, world, { x: 10, z: -54.2 });
+  world.spire = church(lk, world, { x: 10, z: -54.2 }).spire; // (the star at its tip: the puzzle lines the view up on it)
   placed.push([10, -53, 14]);
 
   // the asylum of Saint-Paul: long monastery wing, cloister wall, a garden

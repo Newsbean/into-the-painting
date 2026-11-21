@@ -50,7 +50,7 @@ export function story(world, { H, strokes }) {
       model: vincent.mesh(ghostMaterial(0xffd98a, 1.0)),
       name: 'Vincent',
       greet: ['Ah, a visitor, at this hour. Look how the sky moves tonight.', 'My brother Theo sends paint from Paris. His parcel has blown up among the stars.'],
-      thanks: ['Eleven. I have counted them again.', 'This morning I saw the countryside from my window, with nothing but the morning star, which looked very big.'],
+      thanks: ['Eleven. I have counted them again.', 'The sight of the stars always makes me dream.'],
     },
     exit: { pos: [70, H(70, 36), 36], ry: 0.9 },
   });
