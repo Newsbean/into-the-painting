@@ -13,6 +13,7 @@ import { addKristiania, townWeight, TOWN } from './kristiania/town.js';
 import { KristianiaKit, kristianiaMaterials } from './kristiania/kit.js';
 import { layYards, cutYards } from './country/plan.js';
 import { addCountry } from './country/index.js';
+import { ABOUT } from './about.js';
 
 // The Scream. This file is the world itself: its look, the line of the road, the
 // shape of the ground, and build(), which calls the parts in order. The parts are
@@ -35,12 +36,7 @@ import { addCountry } from './country/index.js';
 export class ScreamWorld extends World {
   constructor(ctx) {
     super(ctx);
-    this.id = 'scream';
-    this.index = 3;
-    this.kicker = 'IV · Kristiania, Norway, 1893';
-    this.title = 'The Scream';
-    this.sub = 'Edvard Munch';
-    this.aspect = 73.5 / 91;
+    Object.assign(this, ABOUT); // id, title, kicker, proportions: ./about.js
     this.extent = 260;
     this.boundary = 250;
     this.center = { x: -40, z: -40 };

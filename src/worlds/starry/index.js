@@ -12,6 +12,7 @@ import { villagers } from './people.js';
 import { glow } from './glow.js';
 import { easel, story } from './story.js';
 import { vincent, flyCrows } from './vincent/index.js';
+import { ABOUT } from './about.js';
 
 // The Starry Night, built from the parts beside this file. Every part is a function
 // part(world, kit), and build() calls them in the one order that gives this world: they
@@ -34,12 +35,7 @@ import { vincent, flyCrows } from './vincent/index.js';
 export class StarryWorld extends World {
   constructor(ctx) {
     super(ctx);
-    this.id = 'starry';
-    this.index = 0;
-    this.kicker = 'I · Saint-Rémy-de-Provence, June 1889';
-    this.title = 'The Starry Night';
-    this.sub = 'Vincent van Gogh';
-    this.aspect = 92 / 73;
+    Object.assign(this, ABOUT); // id, title, kicker, proportions: ./about.js
     // the land: the village of the painting under the hill, the town across the river, and
     // fields out to the foot of the Alpilles
     this.extent = 580;

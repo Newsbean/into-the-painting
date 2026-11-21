@@ -27,6 +27,9 @@ vec3 skyColor(vec3 d){
 
 const _tmp = new THREE.Color();
 const SLOTS = [-62, -31, 0, 31, 62]; // degrees around the curved wall
+// what a frame holds until its painting has loaded: bare paper
+const PAPER = new THREE.DataTexture(new Uint8Array([238, 231, 211, 255]), 1, 1);
+PAPER.needsUpdate = true;
 const RAD = 23;
 const SIG = { starry: '#5b8cff', wave: '#3fa0c8', pearl: '#f2c94c', scream: '#ff7a3c', mona: '#9fb86a' };
 
@@ -190,7 +193,8 @@ export class GalleryWorld extends World {
     }
   }
 
-  // called once the five paintings have been rendered
+  // Called once, when the game opens, with the five worlds in order. Most of them are not
+  // built yet (game.js: init): all a frame needs is the painting's name and proportions.
   hang(worlds) {
     const S = this.scene;
     const { strokes } = this.ctx;
@@ -208,7 +212,7 @@ export class GalleryWorld extends World {
       FB.box(T, ph, 0.5, gold, -pw / 2 - T / 2, cy - ph / 2, 0.25, 0, undefined, M);
       FB.box(T, ph, 0.5, gold, pw / 2 + T / 2, cy - ph / 2, 0.25, 0, undefined, M);
       const mat = new THREE.ShaderMaterial({
-        uniforms: { tGrey: { value: w.thumbGrey.texture }, tColor: { value: w.thumbColor.texture }, uReal: { value: new THREE.Vector4(0, 0, 0, 0) }, uDone: { value: 0 }, uPulse: { value: 0 }, uTime: G.uTime, uNoise: G.uNoise },
+        uniforms: { tGrey: { value: PAPER }, tColor: { value: PAPER }, uReal: { value: new THREE.Vector4(0, 0, 0, 0) }, uDone: { value: 0 }, uPulse: { value: 0 }, uTime: G.uTime, uNoise: G.uNoise },
         vertexShader: `varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`,
         fragmentShader: /* glsl */ `
           varying vec2 vUv; uniform sampler2D tGrey, tColor, uNoise; uniform float uDone, uPulse, uTime; uniform vec4 uReal;
@@ -231,8 +235,8 @@ export class GalleryWorld extends World {
             gl_FragColor = vec4(col, 1.0);
           }`,
       });
-      // If the real painting has been put in public/paintings/<id>.jpg it hangs here in place
-      // of the picture rendered from the world (README: "The pictures on the gallery wall").
+      // The real painting, public/paintings/<id>.jpg, hangs here (README: "The pictures on
+      // the gallery wall"); until it has loaded, or if it is missing, the frame holds bare paper.
       new THREE.TextureLoader().load(
         `${import.meta.env.BASE_URL}paintings/${w.id}.jpg`,
         (tex) => {

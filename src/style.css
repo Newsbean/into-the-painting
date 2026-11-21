@@ -88,6 +88,93 @@ body {
   opacity: 0.6;
 }
 
+.trouble {
+  display: none;
+  margin-top: 6px;
+}
+.trouble p {
+  margin: 0 0 22px;
+  font-family: var(--serif);
+  font-size: 19px;
+  line-height: 1.5;
+  opacity: 0.92;
+}
+.trouble button {
+  font: inherit;
+  font-size: 12px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: inherit;
+  background: none;
+  border: 1px solid rgba(244, 234, 210, 0.4);
+  border-radius: 999px;
+  padding: 11px 24px;
+  cursor: pointer;
+}
+.trouble button:hover {
+  border-color: rgba(244, 234, 210, 0.85);
+}
+#loading.stuck .loading-bar,
+#loading.stuck .loading-text {
+  display: none;
+}
+#loading.stuck .trouble {
+  display: block;
+}
+#loading.stuck .loading-inner {
+  width: min(620px, 86vw);
+}
+
+/* what is being made, over the wash of paper, the first time a painting is walked into.
+   (The dots are moved by the compositor, so they keep going while the world is being built.) */
+#wait {
+  position: fixed;
+  inset: 0;
+  display: grid;
+  grid-auto-flow: column;
+  place-content: center;
+  align-items: baseline;
+  gap: 5px;
+  z-index: 31;
+  pointer-events: none;
+  color: #3a3128;
+  font-family: var(--serif);
+  font-style: italic;
+  font-size: 26px;
+  opacity: 0;
+  transition: opacity 0.4s ease;
+}
+#wait.show {
+  opacity: 1;
+}
+#wait span {
+  margin-right: 6px;
+}
+#wait i {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #3a3128;
+  animation: wait-dot 1.2s ease-in-out infinite;
+}
+#wait i:nth-of-type(2) {
+  animation-delay: 0.2s;
+}
+#wait i:nth-of-type(3) {
+  animation-delay: 0.4s;
+}
+@keyframes wait-dot {
+  0%,
+  100% {
+    opacity: 0.15;
+    transform: translateY(0);
+  }
+  50% {
+    opacity: 0.9;
+    transform: translateY(-5px);
+  }
+}
+
 /* ---------- title ---------- */
 #title {
   background: radial-gradient(90% 70% at 50% 55%, rgba(6, 9, 26, 0.25) 0%, rgba(6, 9, 26, 0.78) 100%);

@@ -17,6 +17,8 @@
 
     <!-- colour wash used for every transition -->
     <div id="fade"></div>
+    <!-- what is being made, the first time a painting is walked into -->
+    <div id="wait"><span></span><i></i><i></i><i></i></div>
 
     <!-- the finished picture: a gilt window in the painting's own shape -->
     <div id="matte">
@@ -30,6 +32,11 @@
         <div class="loading-title">Into the Painting</div>
         <div class="loading-bar"><i id="loading-fill"></i></div>
         <div id="loading-text" class="loading-text">Stretching the canvas…</div>
+        <!-- shown instead of the bar when the browser cannot draw the game properly (main.js) -->
+        <div id="trouble" class="trouble">
+          <p id="trouble-text"></p>
+          <button id="anyway">Open it anyway</button>
+        </div>
       </div>
     </div>
 

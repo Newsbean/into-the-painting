@@ -137,7 +137,7 @@ export async function runLab(game, ui, path, params) {
     }
   }
 
-  await game.init([{ id: 'lab', cls: LabWorld, label: 'Setting up the lab…' }], (p, t) => ui.loading(p, t), { thumbnails: false });
+  await game.init([{ id: 'lab', cls: LabWorld, label: 'Setting up the lab…' }], (p, t) => ui.loading(p, t));
   game.run();
   ui.hideLoading();
   await game.debug.go('lab');

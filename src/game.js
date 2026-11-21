@@ -48,24 +48,41 @@ export class Game {
     window.addEventListener('resize', () => this.resize());
     this.player = new Player(strokes.dab);
 
-    const total = defs.length;
-    for (let i = 0; i < total; i++) {
-      const d = defs[i];
-      onProgress(i / total, d.label);
+    // Every world has its place from the start (a name, a frame on the gallery wall), but only
+    // those in opts.first are built now. The rest are built when they are first walked into
+    // (enterWorld), so the page opens in seconds instead of building five worlds nobody has
+    // asked for yet. Until then worlds[id] is a stub: { id, title, sub, kicker, aspect, done }.
+    this.defs = Object.fromEntries(defs.map((d) => [d.id, d]));
+    for (const d of defs) {
+      this.worlds[d.id] = { ...d.about, id: d.id, stub: true, done: false };
+      if (d.id !== 'gallery') this.order.push(d.id);
+    }
+    const first = defs.filter((d) => !opts.first || opts.first.includes(d.id));
+    for (let i = 0; i < first.length; i++) {
+      onProgress(i / first.length, first[i].label);
       await wait(30);
-      const w = new d.cls(this.ctx);
-      if (w.ready) await w.ready.catch((e) => console.warn('model load failed', e));
-      this.worlds[w.id] = w;
-      if (w.id !== 'gallery') this.order.push(w.id);
+      await this.build(first[i].id);
     }
     onProgress(0.96, 'Varnishing…');
     await wait(30);
-    // warm every shader + bake the pictures that hang in the gallery
-    this.gallery = this.worlds.gallery ?? null;
-    if (opts.thumbnails !== false) await this.makeThumbnails();
+    this.gallery = this.worlds.gallery && !this.worlds.gallery.stub ? this.worlds.gallery : null;
+    this.gallery?.hang?.(this.order.map((id) => this.worlds[id]));
     onProgress(1, 'Ready');
     this.bindInput();
     window.__game = this;
+  }
+
+  // build a world that has only been a stub so far, and put it where the stub was
+  async build(id) {
+    const d = this.defs[id];
+    const cls = d.cls ?? (await d.load())[d.name];
+    const w = new cls(this.ctx);
+    if (w.ready) await w.ready.catch((e) => console.warn('model load failed', e));
+    this.worlds[id] = w;
+    performance.mark('built:' + id); // (with 'ready', in main.js: where the time to open goes)
+    const pic = this.gallery?.pictures.find((p) => p.world.id === id);
+    if (pic) pic.world = w; // the frame on the wall follows the world itself from now on
+    return w;
   }
 
   // ---------------------------------------------------------------- sizing
@@ -73,7 +90,7 @@ export class Game {
     const w = window.innerWidth,
       h = window.innerHeight;
     // never render more than a 1080p-class frame; the paint filter is per pixel
-    this.maxScale = Math.min(1, 1920 / Math.max(1, w), 1080 / Math.max(1, h)) * 1;
+    this.maxScale = Math.min(1, 1920 / Math.max(1, w), 1080 / Math.max(1, h)) * (this.lite ? 0.5 : 1);
     this.scale = Math.min(this.scale ?? 1, this.maxScale);
     const rw = Math.max(16, Math.round(w * this.scale)),
       rh = Math.max(16, Math.round(h * this.scale));
@@ -215,12 +232,19 @@ export class Game {
   }
 
   async enterWorld(id) {
-    const w = this.worlds[id];
     this.mode = 'cinema';
     this.ui.clearCaptions();
     this.ui.cinema(true);
     this.ui.prompt('');
     await this.ui.fade(1, 800, '#f3ead6');
+    // the first time in, the world is built here, behind the wash of paper
+    const fresh = !!this.worlds[id].stub;
+    if (fresh) {
+      this.ui.wait(this.defs[id].label);
+      await wait(120);
+      await this.build(id);
+    }
+    const w = this.worlds[id];
     this.setWorld(w);
     w.onEnter?.();
     const [sx, sz] = w.spawn.pos;
@@ -236,6 +260,12 @@ export class Game {
     const pose = this.viewPose(w);
     this.setCamera(pose);
     this.drift = { pose, amp: 0.8 };
+    if (fresh) {
+      // its first frame (and all its shaders) drawn while nothing can be seen
+      this.frame(1 / 60);
+      await wait(60);
+      this.ui.wait('');
+    }
     await this.ui.fade(0, 1400);
     if (!w.visited) {
       w.visited = true;
@@ -466,48 +496,6 @@ export class Game {
     this.ui.say(CURATOR, 'It is whole again. Wander as long as you like. The golden frame will take you back.');
   }
 
-  // ---------------------------------------------------------------- pictures for the gallery wall
-  async makeThumbnails() {
-    const H = 640;
-    const cam = new THREE.PerspectiveCamera(50, 1, 0.3, 1700);
-    for (const id of this.order) {
-      const w = this.worlds[id];
-      const W = Math.round(H * w.aspect);
-      const pipe = new Pipeline(this.renderer, W, H);
-      const mk = () => {
-        const t = new THREE.WebGLRenderTarget(W, H, { minFilter: THREE.LinearFilter, magFilter: THREE.LinearFilter, depthBuffer: false });
-        return t;
-      };
-      w.thumbGrey = mk();
-      w.thumbColor = mk();
-      const v = this.viewPose(w);
-      cam.aspect = w.aspect;
-      cam.fov = v.fov;
-      cam.position.copy(v.pos);
-      cam.lookAt(v.target);
-      cam.updateProjectionMatrix();
-      G.uPixel.value = H / (2 * Math.tan((cam.fov * Math.PI) / 360));
-      G.uTime.value = 12;
-      w.activate(pipe);
-      w.thumbMode = true;
-      for (const [val, target] of [
-        [1, w.thumbColor],
-        [0, w.thumbGrey],
-      ]) {
-        w.setRestored(val);
-        w.wisps.forEach((x) => (x.group.visible = false));
-        w.syncUniforms();
-        pipe.render(w.scene, cam, target);
-      }
-      w.wisps.forEach((x) => (x.group.visible = true));
-      w.thumbMode = false;
-      w.setRestored(0);
-      pipe.dispose();
-      await wait(20);
-    }
-    this.gallery?.hang?.(this.order.map((id) => this.worlds[id]));
-  }
-
   // ---------------------------------------------------------------- frame
   frame(dt) {
     dt = Math.min(dt, 0.05);
@@ -594,7 +582,7 @@ export class Game {
   // ---------------------------------------------------------------- handy while building worlds
   debug = {
     go: async (id) => {
-      const w = this.worlds[id];
+      const w = this.worlds[id].stub ? await this.build(id) : this.worlds[id];
       this.ui.showTitle(false);
       this.ui.showHud(true);
       this.drift = null;

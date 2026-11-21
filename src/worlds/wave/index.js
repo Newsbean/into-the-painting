@@ -15,6 +15,7 @@ import { addStory } from './story.js';
 import { EdoKit, edoMaterials } from './edo/kit.js';
 import { addEdoTown, edoWeight, edoLevel, CASTLE } from './edo/town.js';
 import { addLife } from './life/index.js';
+import { ABOUT } from './about.js';
 
 // The Great Wave. This file is the world itself: its look, where you stand, the
 // lie of the land, and the order its parts are built in. The parts are in the
@@ -52,12 +53,7 @@ let castleY;
 export class WaveWorld extends World {
   constructor(ctx) {
     super(ctx);
-    this.id = 'wave';
-    this.index = 1;
-    this.kicker = 'II · Edo, Japan, about 1831';
-    this.title = 'The Great Wave';
-    this.sub = 'Katsushika Hokusai';
-    this.aspect = 37.9 / 25.7;
+    Object.assign(this, ABOUT); // id, title, kicker, proportions: ./about.js
     this.extent = 470;
     this.boundary = 400;
     this.center = { x: -60, z: 90 };

@@ -79,6 +79,22 @@ function drawStroke(ctx, S, r, size) {
   }
 }
 
+// Soften a finished sheet: one blur of the whole of it, wrapped round its edges so that it
+// still tiles. (Blurring each stroke as it is drawn comes to the same picture and takes a
+// hundred times as long: six thousand filtered strokes were, for a while, most of the time
+// the game took to open, and minutes in a browser without a graphics card.)
+function soften(c, ctx, px) {
+  const size = c.width,
+    m = Math.ceil(px * 3) + 2,
+    big = document.createElement('canvas');
+  big.width = big.height = size + m * 2;
+  const b = big.getContext('2d');
+  for (const ox of [-size, 0, size]) for (const oy of [-size, 0, size]) b.drawImage(c, m + ox, m + oy);
+  ctx.filter = `blur(${px}px)`;
+  ctx.drawImage(big, -m, -m);
+  ctx.filter = 'none';
+}
+
 export function makeStrokeTexture(style, renderer, size = 1024, seed = 11) {
   const S = STYLES[style];
   const c = document.createElement('canvas');
@@ -86,10 +102,9 @@ export function makeStrokeTexture(style, renderer, size = 1024, seed = 11) {
   const ctx = c.getContext('2d');
   ctx.fillStyle = 'rgb(128,128,110)';
   ctx.fillRect(0, 0, size, size);
-  if (S.blur) ctx.filter = `blur(${S.blur}px)`;
   const r = rng(seed);
   for (let i = 0; i < S.count; i++) drawStroke(ctx, S, r, size);
-  ctx.filter = 'none';
+  if (S.blur) soften(c, ctx, S.blur);
 
   if (style === 'soft' || style === 'wood') {
     // canvas weave / paper tooth lives in the height channel only

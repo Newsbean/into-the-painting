@@ -11,6 +11,7 @@ import { wetAt, deckAt } from './delft/plan.js';
 import { addHouse, addShafts, addMotes } from './house.js';
 import { addGirl } from './girl.js';
 import { addStory } from './story.js';
+import { ABOUT } from './about.js';
 
 // Girl with a Pearl Earring. This file is the world itself: its look, the shape
 // of the ground, build(), which calls the parts in order, and the turn of her
@@ -30,12 +31,7 @@ import { addStory } from './story.js';
 export class PearlWorld extends World {
   constructor(ctx) {
     super(ctx);
-    this.id = 'pearl';
-    this.index = 2;
-    this.kicker = 'III · Delft, Dutch Republic, about 1665';
-    this.title = 'Girl with a Pearl Earring';
-    this.sub = 'Johannes Vermeer';
-    this.aspect = 39 / 44.5;
+    Object.assign(this, ABOUT); // id, title, kicker, proportions: ./about.js
     this.extent = 200;
     this.boundary = 180;
     this.ceiling = 60;

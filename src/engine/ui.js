@@ -19,6 +19,25 @@ export class UI {
     $('loading-fill').style.width = `${Math.round(p * 100)}%`;
     if (text) $('loading-text').textContent = text;
   }
+  // the game cannot open as it should (no graphics card behind the page, no WebGL2): say
+  // why, in place of a bar that would not move. Resolves when the player says to go on.
+  trouble(text, canGoOn = true) {
+    $('trouble-text').textContent = text;
+    $('anyway').style.display = canGoOn ? '' : 'none';
+    $('loading').classList.add('stuck');
+    return new Promise((res) => {
+      $('anyway').onclick = () => {
+        $('loading').classList.remove('stuck');
+        res();
+      };
+    });
+  }
+  // a line over the wash of paper while a world is built for the first time; wait('') clears it
+  wait(text) {
+    const el = $('wait');
+    if (text) el.firstElementChild.textContent = text.replace(/…$/, '');
+    el.classList.toggle('show', !!text);
+  }
   hideLoading() {
     const el = $('loading');
     el.classList.add('hidden');

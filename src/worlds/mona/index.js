@@ -16,6 +16,7 @@ import { buildTravellers } from './travellers.js';
 import { buildStory } from './story.js';
 import { TuscanKit, tuscanMaterials } from './tuscany/kit.js';
 import { addTuscany } from './tuscany/index.js';
+import { ABOUT } from './about.js';
 
 // Leonardo's dream of Tuscany: every edge dissolved in haze. No lines, only
 // smoke: sfumato.
@@ -30,12 +31,7 @@ const TERRACE = 3 + (fbm(2, 9, 3) - 0.5) * 9 + 26;
 export class MonaWorld extends World {
   constructor(ctx) {
     super(ctx);
-    this.id = 'mona';
-    this.index = 4;
-    this.kicker = 'V · Florence, about 1503';
-    this.title = 'Mona Lisa';
-    this.sub = 'Leonardo da Vinci';
-    this.aspect = 53 / 77;
+    Object.assign(this, ABOUT); // id, title, kicker, proportions: ./about.js
     this.extent = 280;
     this.boundary = 270;
     this.center = { x: 0, z: -80 };
