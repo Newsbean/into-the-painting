@@ -61,7 +61,7 @@ export function addStory(world, kit) {
       dz = gz - fr.z,
       d = Math.hypot(dx, dz);
     if (d > keep) {
-      const s = Math.min(d - keep, speed * dt);
+      const s = Math.min(d - keep, (speed + Math.max(0, d - 8) * 0.4) * dt); // they hurry when they have fallen behind
       fr.x += (dx / d) * s;
       fr.z += (dz / d) * s;
       fr.ry = Math.atan2(dx, dz);

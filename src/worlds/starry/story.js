@@ -1,5 +1,6 @@
-import { ghostMaterial } from '../../engine/world.js';
-import { paintMaterial } from '../../engine/paint.js';
+import * as THREE from 'three';
+import { ghostMaterial, beam } from '../../engine/world.js';
+import { paintMaterial, glowSprite } from '../../engine/paint.js';
 import { Builder, figure } from '../../engine/build.js';
 import { FORUM } from './town/layout.js';
 
@@ -49,9 +50,58 @@ export function story(world, { H, strokes }) {
       model: vincent.mesh(ghostMaterial(0xffd98a, 1.0)),
       name: 'Vincent',
       greet: ['Ah, a visitor, at this hour. Look how the sky moves tonight.', 'My brother Theo sends paint from Paris. His parcel has blown up among the stars.'],
-      thanks: ["Theo's letter. And the tubes, good, good.", 'This morning I saw the countryside from my window, with nothing but the morning star, which looked very big.'],
+      thanks: ['There. The morning star.', 'This morning I saw the countryside from my window, with nothing but the morning star, which looked very big.'],
     },
     exit: { pos: [70, H(70, 36), 36], ry: 0.9 },
+  });
+  // ---- the task: the morning star has not risen. It lies asleep in the wheat: carry it up
+  // and set it in the sky, low and to the right of the cypress, where the picture has it.
+  const star = new THREE.Group(),
+    shaft = beam(0xdff2ff, 70, 1.0);
+  star.add(glowSprite(0xf4fbff, 7, 0.95), shaft);
+  star.visible = false;
+  world.scene.add(star);
+  const bed = [[-80, -34], [-96, -30], [-88, -12], [-92, -22]].map(([x, z]) => [x, H(x, z) + 1.2, z]).find((p) => !world.blocked(p[0], p[1], p[2])) ?? [-92, H(-92, -22) + 1.2, -22];
+  const eye = world.view.pos,
+    cyp = world.cypressTop,
+    dx = cyp[0] - eye[0],
+    dz = cyp[2] - eye[2],
+    far = Math.hypot(dx, dz);
+  const sky = new THREE.Vector3(cyp[0] + (dx / far) * 46 - (dz / far) * 10, eye[1] + (far + 46) * 0.25, cyp[2] + (dz / far) * 46 + (dx / far) * 10);
+  const over = new THREE.Vector3();
+  const task = (world.task = {
+    done: false,
+    held: false,
+    ask: ["Theo's letter. And the tubes, good, good.", 'But look up. The morning star has not risen: it has fallen asleep in the wheat.', 'Carry it up for me, to the right of the cypress.'],
+    text: () => (task.held ? 'Carry the morning star up into the sky, to the right of the cypress' : 'Find the morning star, asleep in the wheat'),
+    start() {
+      star.position.set(...bed);
+      star.visible = true;
+    },
+    update(dt, game, mark) {
+      const p = game.player.pos;
+      if (!task.held) {
+        star.position.y = bed[1] + Math.sin(performance.now() * 0.002) * 0.25;
+        mark(star.position, '#dff2ff');
+        if (star.position.distanceTo(p) < 4.5 + game.player.fly * 3) {
+          task.held = true;
+          shaft.visible = false;
+          game.stuck = 0;
+          game.audio.chime(4);
+          game.ui.say('The Curator', 'It is awake. Hold Space and ride the wind: carry it up, to the right of the great cypress.');
+          game.refreshObjective();
+        }
+        return false;
+      }
+      // it rides just above your shoulder
+      star.position.lerp(over.set(p.x, p.y + 2.6, p.z), Math.min(1, dt * 6));
+      mark(sky, '#ffffff');
+      return sky.distanceTo(p) < 10;
+    },
+  });
+  // set free, it climbs to its place and stays there
+  world.tickers.push((dt) => {
+    if (task.done) star.position.lerp(sky, Math.min(1, dt * 1.5));
   });
   world.finalFact = 'The “morning star” was the planet Venus. The painting has hung at MoMA in New York since 1941.';
   world.finalLine = 'The last stroke: the morning star.';
@@ -60,5 +110,6 @@ export function story(world, { H, strokes }) {
     high: 'One colour is caught at the very top of the cypress. Hold Space to ride the wind.',
     memento: "Theo's parcel has blown over the river, high above the lights of the town. Fly to it.",
     echo: 'Carry it to Vincent in the asylum garden.',
+    task: () => (task.held ? 'Fly up to the light that is waiting in the sky, just to the right of the cypress.' : 'A cold white light lies in the wheat, out to the west of the village.'),
   };
 }

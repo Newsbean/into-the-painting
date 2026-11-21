@@ -84,6 +84,30 @@ once more or once less moves everything built after it**, so when you change a p
 later parts to shift, and when you only want to restyle something, keep its dice rolls as
 they are. Set pieces that roll their own dice (`rng(seed)`) are free of this.
 
+### The story of a world, and its task
+
+Every world plays the same way: find the five lost colours, find the keepsake, carry it to
+the artist. Then comes the one thing only that picture needs, its task, and when that is
+done the picture is finished. A world's `story.js` sets it:
+
+```js
+world.task = {
+  ask: ['what the artist says when he asks for it', ...],
+  text: () => 'the objective shown on screen',
+  start(game) {},                       // set the scene
+  update(dt, game, mark) { ... }        // every frame; mark(position, colour) shows a marker; return true when done
+};
+world.hints.task = 'what the curator says when the player is lost';   // or a function
+```
+
+| World | The task |
+|---|---|
+| The Starry Night | the morning star is asleep in the wheat: carry it up and set it in the sky beside the cypress |
+| The Great Wave | bring Hokusai the three carved blocks in the order a print is pressed: outline, pale blue, deep blue |
+| Girl with a Pearl Earring | she has slipped out to the market: find her among the stalls by her scarf |
+| The Scream | his friends walked on: go after them and walk back with them |
+| Mona Lisa | she will not smile in silence: find the three musicians and lead them to the loggia |
+
 ### Painting with code
 
 - Every surface uses `paintMaterial({ stroke, scale, contrast, hueVar, ... })` from
