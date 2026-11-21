@@ -290,6 +290,8 @@ export class Game {
         ? `Find ${w.memento.name}`
         : w.stage === 'echo'
         ? `Bring it to ${w.echo.name}`
+        : w.stage === 'task'
+        ? w.task.text(w)
         : w.stage === 'free'
         ? 'Painting restored · step through the golden frame'
         : '';
@@ -317,7 +319,16 @@ export class Game {
     } else if (w.stage === 'echo') {
       const ep = w.echoGroup.position;
       mark(new THREE.Vector3(ep.x, ep.y + 2, ep.z), '#ffe2a0');
-      if (Math.hypot(ep.x - p.x, ep.z - p.z) < 5.5 && Math.abs(ep.y - p.y) < 6) this.finale();
+      if (Math.hypot(ep.x - p.x, ep.z - p.z) < 5.5 && Math.abs(ep.y - p.y) < 6) {
+        if (w.task && !w.task.done) this.startTask();
+        else this.finale();
+      }
+    } else if (w.stage === 'task') {
+      // the one thing this picture still needs: every world has its own (world.task)
+      if (w.task.update(dt, this, mark)) {
+        w.task.done = true;
+        this.finale();
+      }
     } else if (w.stage === 'free') {
       const pp = w.portal.position;
       mark(new THREE.Vector3(pp.x, pp.y + 2.4, pp.z), '#ffd76a');
@@ -339,7 +350,7 @@ export class Game {
       this.stuck = 20;
       const next = w.wisps.find((x) => !x.found);
       const hint = w.stage === 'wisps' ? (next?.def.high ? w.hints.high : 'Follow the coloured lights at the edge of your view.') : w.hints[w.stage];
-      if (hint) this.ui.say(CURATOR, hint);
+      if (hint) this.ui.say(CURATOR, typeof hint === 'function' ? hint(w) : hint);
     }
     this.ui.setMarkers(markers, this.camera, window.innerWidth, window.innerHeight);
   }
@@ -379,6 +390,21 @@ export class Game {
     this.audio.chime(3);
     this.ui.fact(w.memento.name, w.memento.text);
     this.ui.say(CURATOR, w.hints.echo);
+    this.refreshObjective();
+  }
+
+  // The artist has what was lost, and asks for the one thing the picture still needs.
+  // A world's task is { ask: [lines], text(world) -> the objective, start(game),
+  // update(dt, game, mark) -> true when it is done }; mark(position, colour) puts a
+  // marker at the edge of the view.
+  startTask() {
+    const w = this.world;
+    w.stage = 'task';
+    this.stuck = 0;
+    w.echoGroup.userData.beam.visible = false;
+    this.audio.chime(4);
+    for (const line of w.task.ask) this.ui.say(w.echo.name, line);
+    w.task.start?.(this);
     this.refreshObjective();
   }
 

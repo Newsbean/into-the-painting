@@ -46,9 +46,58 @@ export function addStory(world, kit) {
       model: buildScreamer(strokes),
       name: 'Munch',
       greet: ['My friends walked on. I stood here, trembling. The sky had turned red as blood.', 'I wrote it down once, in Nice. The wind has the page now.'],
-      thanks: ['Yes. These are the words.', 'I do not have to run from it. I can paint it.'],
+      thanks: ['You came back.', 'I do not have to run from it. I can paint it.'],
     },
     exit: { pos: [E.x - nx * 1.2 + 7, H(E.x - nx * 1.2 + 7, E.z - nz * 1.2 + 2.5), E.z - nz * 1.2 + 2.5], ry: 1.2 },
+  });
+  // ---- the task: he let his friends walk on. Fetch them back, so that he does not stand there alone.
+  const far = Math.hypot(e2.x - E.x, e2.z - E.z),
+    tx = (e2.x - E.x) / far,
+    tz = (e2.z - E.z) / far;
+  const beside = [E.x + tx * 9 + nx * 2.7, E.z + tz * 9 + nz * 2.7]; // where they stand in the picture: behind him, at the railing
+  const fr = world.friends;
+  const walk = (dt, gx, gz, keep, speed) => {
+    const dx = gx - fr.x,
+      dz = gz - fr.z,
+      d = Math.hypot(dx, dz);
+    if (d > keep) {
+      const s = Math.min(d - keep, speed * dt);
+      fr.x += (dx / d) * s;
+      fr.z += (dz / d) * s;
+      fr.ry = Math.atan2(dx, dz);
+      fr.step += s * 2.6;
+    }
+    fr.mesh.position.set(fr.x, world.groundAt(fr.x, fr.z, H(fr.x, fr.z) + 3) + Math.abs(Math.sin(fr.step)) * 0.03, fr.z);
+    fr.mesh.rotation.y = fr.ry;
+    return d;
+  };
+  world.task = {
+    done: false,
+    ask: ['Yes. These are the words.', 'My friends walked on down the road. I could not call after them. Would you?'],
+    text: () => (fr.with ? 'Walk back to Munch with his friends' : 'Go after his two friends, down the road'),
+    update(dt, game, mark) {
+      const p = game.player.pos;
+      if (!fr.with) {
+        mark(new THREE.Vector3(fr.x, fr.mesh.position.y + 2.2, fr.z), '#ffe2a0');
+        if (Math.hypot(p.x - fr.x, p.z - fr.z) < 4.5 && Math.abs(p.y - fr.mesh.position.y) < 6) {
+          fr.with = true;
+          game.stuck = 0;
+          game.audio.chime(2);
+          game.ui.say('His friends', 'Edvard? We thought he was just behind us.');
+          game.ui.say('His friends', 'Lead the way. We are coming.');
+          game.refreshObjective();
+        }
+        return false;
+      }
+      // they keep a few steps behind you all the way back
+      walk(dt, p.x, p.z, 2.6, 5.2);
+      mark(new THREE.Vector3(ex, ey + 2, ez), '#ffe2a0');
+      return Math.hypot(fr.x - ex, fr.z - ez) < 9 && Math.hypot(p.x - ex, p.z - ez) < 7;
+    },
+  };
+  // once they are back they go and stand where the picture has them
+  world.tickers.push((dt) => {
+    if (world.task.done) walk(dt, beside[0], beside[1], 0.05, 2.2);
   });
   world.finalFact = 'One version set an auction record in 2012. The image lives on as an emoji: 😱. Whatever you carry, you do not have to carry it alone.';
   world.finalLine = 'The last stroke: the sky, exactly as he felt it. And the feeling becomes something shared.';
@@ -57,5 +106,6 @@ export function addStory(world, kit) {
     high: 'One colour is burning at the top of the lighthouse, out on the island. Hold Space to ride the wind.',
     memento: 'A page is turning over and over, high above the fjord.',
     echo: 'Carry the poem back to Munch, where he stopped on the road.',
+    task: () => (world.friends.with ? 'Bring his friends back to where he stands. They will keep behind you.' : 'His friends walked on towards the town. Follow the railing down the road.'),
   };
 }

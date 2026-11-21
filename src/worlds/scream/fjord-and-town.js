@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { waterMaterial } from '../../engine/paint.js';
 import { house, lampPost, mix, jitter, xf } from '../../engine/build.js';
 import { rng } from '../../engine/gl.js';
+import { Soup } from '../../engine/soup.js';
 import { kristianiaPerson } from './kristiania/people.js';
 
 // The fjord, and the two friends on the road. (addTown is the town as it used to be: a
@@ -78,14 +79,21 @@ export function addTown(world, kit) {
 
 // ---------------- people: the two friends who walked on, townsfolk
 export function addPeople(world, kit) {
-  const { R, H, cs, ck } = kit;
+  const { R, S, H, cs, krMats } = kit;
   const a = cs[78],
     b = cs[79],
     L = Math.hypot(b.x - a.x, b.z - a.z),
     R2 = rng(78);
-  // the two friends who walked on: far down the road by now, beside the railing
-  const fr = { x: a.x - ((b.z - a.z) / L) * 1.9, z: a.z + ((b.x - a.x) / L) * 1.9 };
-  for (const [ox, oz] of [[-0.6, 0.3], [0.5, -0.3]]) kristianiaPerson(ck.s('detail'), { x: fr.x + ox, y: H(fr.x + ox, fr.z + oz), z: fr.z + oz, ry: -1.95 + ox * 0.2, R: R2, kind: 'gentleman', col: 0x17171f, scale: 1.04 });
+  // The two friends who walked on: far down the road by now, beside the railing. They are
+  // a mesh of their own, because they can be fetched back (story.js).
+  const pair = new Soup();
+  for (const [ox, oz] of [[-0.6, 0.3], [0.5, -0.3]]) kristianiaPerson(pair, { x: ox, y: 0, z: oz, ry: ox * 0.2, R: R2, kind: 'gentleman', col: 0x17171f, scale: 1.04 });
+  const mesh = pair.mesh(krMats.detail);
+  mesh.geometry.boundingSphere.radius += 0.5;
+  const fr = (world.friends = { mesh, x: a.x - ((b.z - a.z) / L) * 1.9, z: a.z + ((b.x - a.x) / L) * 1.9, ry: Math.atan2(b.x - a.x, b.z - a.z), step: 0 });
+  mesh.position.set(fr.x, H(fr.x, fr.z), fr.z);
+  mesh.rotation.y = fr.ry;
+  S.add(mesh);
   // five townsfolk stood about the old town: Kristiania has its own people now, but the
   // dice are thrown for them as before
   for (let i = 0; i < 15; i++) R();
