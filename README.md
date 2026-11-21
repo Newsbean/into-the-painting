@@ -230,7 +230,8 @@ Lab: `/?debug&look=scream&lab=worlds/scream/kristiania/lab.js`
 
 ## House rules
 
-- All art is made in code. Never add museum photographs or scans of the paintings.
+- Every world is made in code: no photograph or scan is ever used inside a painting's world.
+  The one exception is the wall of the gallery, which may hang the real paintings (below).
 - Facts shown in the game about the artists and paintings must be true.
 - *Girl with a Pearl Earring*: no characters or plot from the novel or the film.
 - *The Scream*: the figure is never a monster, there are no jump scares, and the closing
@@ -238,6 +239,15 @@ Lab: `/?debug&look=scream&lab=worlds/scream/kristiania/lab.js`
 - The Japanese setting of the Great Wave is treated with respect.
 - Keep comments short and about why; keep files to one subject so two people rarely need
   the same file.
+
+## The pictures on the gallery wall
+
+The gallery hangs a picture of each world, rendered from the world itself. If a file
+`public/paintings/<id>.jpg` exists (`starry`, `wave`, `pearl`, `scream`, `mona`) that
+photograph of the real painting hangs there instead: as a pencil study until its world is
+restored, in its own colours after. All five paintings are in the public domain; use
+reproductions that are too (Wikimedia Commons), and list where each came from in
+`public/paintings/CREDITS.md`.
 
 ## Recording the showcase film
 

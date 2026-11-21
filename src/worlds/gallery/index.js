@@ -208,12 +208,22 @@ export class GalleryWorld extends World {
       FB.box(T, ph, 0.5, gold, -pw / 2 - T / 2, cy - ph / 2, 0.25, 0, undefined, M);
       FB.box(T, ph, 0.5, gold, pw / 2 + T / 2, cy - ph / 2, 0.25, 0, undefined, M);
       const mat = new THREE.ShaderMaterial({
-        uniforms: { tGrey: { value: w.thumbGrey.texture }, tColor: { value: w.thumbColor.texture }, uDone: { value: 0 }, uPulse: { value: 0 }, uTime: G.uTime, uNoise: G.uNoise },
+        uniforms: { tGrey: { value: w.thumbGrey.texture }, tColor: { value: w.thumbColor.texture }, uReal: { value: new THREE.Vector4(0, 0, 0, 0) }, uDone: { value: 0 }, uPulse: { value: 0 }, uTime: G.uTime, uNoise: G.uNoise },
         vertexShader: `varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`,
         fragmentShader: /* glsl */ `
-          varying vec2 vUv; uniform sampler2D tGrey, tColor, uNoise; uniform float uDone, uPulse, uTime;
+          varying vec2 vUv; uniform sampler2D tGrey, tColor, uNoise; uniform float uDone, uPulse, uTime; uniform vec4 uReal;
           void main(){
-            vec3 g = texture2D(tGrey, vUv).rgb, c = texture2D(tColor, vUv).rgb;
+            vec3 g, c;
+            if (uReal.x > 0.0){
+              // the painting itself: before it is restored, a pencil study of it on bare paper
+              c = texture2D(tColor, vUv * uReal.xy + uReal.zw).rgb;
+              float l = dot(c, vec3(0.299, 0.587, 0.114));
+              g = mix(vec3(0.3, 0.29, 0.32), vec3(0.95, 0.92, 0.85), smoothstep(0.08, 0.7, l)) / 0.82;
+              c /= 1.05;
+            } else {
+              g = texture2D(tGrey, vUv).rgb;
+              c = texture2D(tColor, vUv).rgb;
+            }
             float n = texture2D(uNoise, vUv * 0.012).r * 0.7 + texture2D(uNoise, vUv * 0.05).g * 0.3;
             float m = 1.0 - smoothstep(uDone * 1.15 - 0.1, uDone * 1.15, n);
             vec3 col = mix(g * 0.82, c * 1.05, m);
@@ -221,6 +231,24 @@ export class GalleryWorld extends World {
             gl_FragColor = vec4(col, 1.0);
           }`,
       });
+      // If the real painting has been put in public/paintings/<id>.jpg it hangs here in place
+      // of the picture rendered from the world (README: "The pictures on the gallery wall").
+      new THREE.TextureLoader().load(
+        `${import.meta.env.BASE_URL}paintings/${w.id}.jpg`,
+        (tex) => {
+          tex.colorSpace = THREE.NoColorSpace;
+          tex.anisotropy = 8;
+          // fill the frame, cropping whichever way the photograph overhangs it
+          const ia = tex.image.width / tex.image.height,
+            fa = pw / ph,
+            sx = Math.min(1, fa / ia),
+            sy = Math.min(1, ia / fa);
+          mat.uniforms.tColor.value = tex;
+          mat.uniforms.uReal.value.set(sx, sy, (1 - sx) / 2, (1 - sy) / 2);
+        },
+        undefined,
+        () => {}
+      );
       const pic = new THREE.Mesh(new THREE.PlaneGeometry(pw, ph), mat);
       pic.position.set(s.x + s.nx * 0.3, cy, s.z + s.nz * 0.3);
       pic.rotation.y = s.ry;
