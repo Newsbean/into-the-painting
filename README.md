@@ -54,7 +54,8 @@ src/
     build.js           Builder: merge tinted boxes, cylinders, roofs, trees into one mesh; terrain(), tiles()
     soup.js            Soup: the fast path for thousands of small faces (walls, reveals, roofs)
     weld.js            weld(): joins the corners loose triangles share, so less is sent to the graphics card
-    scatter.js         Raw and instances(): one small geometry in thousands of places (grass, stones, trees)
+    scatter.js         Raw and instances(): one small geometry in thousands of places (grass, stones, trees);
+                       footprints(): "is this spot taken?"
     walkers.js         people walking along ways: way(), Walkers, stand()
     flock.js           birds on the wing: cranes, gulls, pigeons
     air.js             petals on the wind, smoke from the roofs
@@ -70,6 +71,8 @@ src/
   worlds/starry/town/  the town kit: house generator, facade parts, planner, church
   worlds/wave/edo/     the Edo kit: merchant houses, storehouses, farmhouses, pagoda, castle
   worlds/pearl/delft/  the Delft kit: canal houses, the Nieuwe Kerk, town hall, mill, gate, ship
+  worlds/scream/kristiania/  the Kristiania kit: board houses, warehouses, church, barque, people
+  worlds/scream/country/     hill farms, boathouses, animals, forest and ground cover
   dev/               development only, never shipped: lab.js, film.js
 ```
 
@@ -176,6 +179,30 @@ Girl with a Pearl Earring's town, about 1660: brick, pale stone, red shutters, w
 | `town.js` | Delft itself: houses, quays, market, trees, people walking, barges, birds, smoke |
 
 Lab: `/?debug&look=pearl&lab=worlds/pearl/delft/lab.js` (add `&show=church`, `hall` or `mill`)
+
+## The Kristiania kit and the country round it (`src/worlds/scream`)
+
+The Scream's town of the 1890s, and the Norwegian hillside it lies under.
+
+| File | What it gives you |
+|---|---|
+| `kristiania/kit.js` | `kristianiaMaterials(strokes)`, `KristianiaKit`, and the parts: casement windows, panelled doors, warehouse gates, hoists, gas lamps, barrels, crates, bollards |
+| `kristiania/house.js` | `townHouse` (painted boards or plaster; `wall` and `roof` set its colours) and `warehouse` |
+| `kristiania/landmarks.js` | `church`, `barque`, `sjekteGeo` (a small boat under sail) |
+| `kristiania/people.js` | `kristianiaPerson`: overcoats and long dresses, and with `col`, `hat`, `arms`, `lean` the same figure is a dancer, a girl at a railing, a farmer; `seatedMan` |
+| `kristiania/town.js` | the town itself: quay, Karl Johan, the square, the pier, lamps, people, boats, gulls, smoke |
+| `country/plan.js` | `YARDS`: the terraces cut into the hill for the farms, his garden and the green by the water |
+| `country/farm.js` | `barn` (stone byre, red hayloft, a bridge to its door), `stabbur` (storehouse on legs), `naust` (boathouse on a landing), `skigard` (the leaning-rail fence), `hesje` (hay on a rack), `cart`, `rowboat` |
+| `country/animals.js` | `horse`, `cow`, `sheep`: one skin over rings from tail to nose; `graze` puts the head down |
+| `country/plants.js` | spruce, pine, birch and rowan made of brush dabs, juniper, scrub, heather, bracken, grass, stones |
+| `country/index.js` | lays all of it out, and puts walkers and hay carts on the road |
+
+To put something on a slope, give it a yard in `country/plan.js`: the ground is cut level
+there, and everything else (grass, trees, fields) keeps off it. `country/` has its own dice.
+The trees and box houses the hill used to have still throw theirs into builders nobody
+draws (`land.js`, `munch/`), which is how the rest of the world has stayed where it was.
+
+Lab: `/?debug&look=scream&lab=worlds/scream/kristiania/lab.js`
 
 ## House rules
 

@@ -21,6 +21,7 @@ export function addRoad(world, kit) {
     const a = cs[i],
       b = cs[i + 1];
     if (a.x < -150) break;
+    if (Math.abs((a.x + b.x) / 2 - 104) < 1.9) continue; // the gap where the path goes down to the boathouses
     const tx = b.x - a.x,
       tz = b.z - a.z,
       L = Math.hypot(tx, tz);

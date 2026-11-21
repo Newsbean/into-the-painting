@@ -10,17 +10,22 @@ import { addFjord, addTown, addPeople } from './fjord-and-town.js';
 import { addMunch } from './munch/index.js';
 import { addStory } from './story.js';
 import { addKristiania, townWeight, TOWN } from './kristiania/town.js';
+import { KristianiaKit, kristianiaMaterials } from './kristiania/kit.js';
+import { layYards, cutYards } from './country/plan.js';
+import { addCountry } from './country/index.js';
 
 // The Scream. This file is the world itself: its look, the line of the road, the
 // shape of the ground, and build(), which calls the parts in order. The parts are
 // the files beside this one:
 //
 //   sky.js             the sky of rolling ribbons, and his great Sun
-//   land.js            the hillside, the trees, the far shore, leaves on the wind
+//   land.js            the hillside, where its trees stand, the far shore, leaves on the wind
 //   road.js            the road and its railing
 //   fjord-and-town.js  the fjord, and the two friends on the road
 //   kristiania/        the town: the Kristiania kit (board houses, warehouses, the church,
 //                      ships, people) and the town laid out with it
+//   country/           the hill farms on their terraces, the boathouses, the forest and
+//                      everything that grows; horses, cattle and sheep; who is on the road
 //   munch/             his other pictures, one file each (munch/index.js lists them)
 //   figure.js          the figure on the road (buildScreamer)
 //   story.js           where he stopped, the diary page, the colours and the words
@@ -59,6 +64,10 @@ export class ScreamWorld extends World {
     this.spawn = { pos: [36, 10.5], yaw: -1.84 };
     this.view = { pos: [2.6, 1.72, 3.1], target: [-4.4, 1.25, -5.2], fov: 62 };
     this.music = 'scream';
+    layYards(
+      (x, z) => this._hill(x, z),
+      (x, z) => smooth(3.6, 7, Math.abs(this._roadZ(x) - z))
+    );
     this.build();
   }
 
@@ -70,8 +79,9 @@ export class ScreamWorld extends World {
     return lerp(6, 34, smooth(-150, -20, x)) + smooth(40, 150, x) * 8;
   }
   heightAt(x, z) {
-    // the town stands on level ground by the water (kristiania/town.js says where)
-    const h = lerp(this._hill(x, z), TOWN.y, townWeight(x, z));
+    // the town stands on level ground by the water (kristiania/town.js says where), and
+    // the farms on terraces cut into the hill (country/plan.js)
+    const h = cutYards(x, z, lerp(this._hill(x, z), TOWN.y, townWeight(x, z)));
     return Math.max(h, this._island(x, z));
   }
   // the ground as it was when the town was a ring of boxes: only the old town's dice still ask for it
@@ -121,8 +131,14 @@ export class ScreamWorld extends World {
     // and, added as the world goes up:
     //   B                 the railing, the town and the harbour: one builder, one mesh
     //   cs                points spaced along the road
-    //   MB, MT, proxyM, shoreZ, person   what Munch's other pictures share (munch/index.js)
-    const kit = { strokes, noise3, R, S, H, maps, wavy, TX: -172, TZ: -74 };
+    //   krMats, ck        the Kristiania kit's materials, and one kit for everything built
+    //                     with it outside the town (farms, his house, the people of his pictures)
+    //   hearths           chimneys that smoke, as [x, y, z]
+    //   oldTrees          where the hill's trees stand (land.js)
+    //   MB, R2, burn, shoreZ, person     what Munch's other pictures share (munch/index.js)
+    const kit = { strokes, noise3, R, S, H, maps, wavy, TX: -172, TZ: -74, hearths: [] };
+    kit.krMats = kristianiaMaterials(strokes);
+    kit.ck = new KristianiaKit(kit.krMats);
 
     addSky(this, kit);
     addLand(this, kit);
@@ -141,6 +157,8 @@ export class ScreamWorld extends World {
     addPeople(this, kit);
     addFarShore(this, kit);
     addMunch(this, kit);
+    this.country = addCountry(this, kit);
+    this.country.tick(0, 12, { x: 2.6, y: 1.7, z: 3.1 });
 
     // leaves on the wind, lights of the town
     addLeaves(this, kit);
@@ -153,7 +171,12 @@ export class ScreamWorld extends World {
   tick(dt, time, player, game) {
     // the world sways while the feeling is trapped, and settles once it is painted
     const calm = this.final;
-    if (game) this.town?.tick(dt, time, game.camera.position);
+    if (game) {
+      this.town?.tick(dt, time, game.camera.position);
+      this.country?.tick(dt, time, game.camera.position);
+    }
+    // the couples of The Dance of Life turn, each at its own pace
+    for (const d of this.dancers ?? []) d.mesh.rotation.y = d.ph + time * d.w;
     this.pillar.material.uniforms.uAmt.value = 0.55 * this.skyRestore;
     this.sky.uniforms.uCalm.value = calm;
     if (game && game.world === this) {

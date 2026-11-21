@@ -35,9 +35,9 @@ const CHUNK = 80;
 const pick = (R, a) => a[(R() * a.length) | 0];
 const _t = new THREE.Color();
 
-export function addKristiania(world, { S, H, maps, strokes, wavy }) {
+export function addKristiania(world, { S, H, maps, strokes, wavy, krMats }) {
   const R = rng(1863); // the year Munch was born
-  const mats = kristianiaMaterials(strokes);
+  const mats = krMats ?? kristianiaMaterials(strokes);
   const lk = new KristianiaKit(mats);
   const streets = [
     { name: 'quay', pts: [[-280, -104], [-200, -104], [-126, -104]], w: 8, sides: [1], main: true, quay: true },

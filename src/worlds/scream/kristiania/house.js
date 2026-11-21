@@ -1,6 +1,6 @@
 // The houses of Kristiania in the 1890s.
 //
-//   townHouse(kit, world, { x, z, ry, w, d, R, floors, clad, lit })
+//   townHouse(kit, world, { x, z, ry, w, d, R, floors, clad, lit, wall, roof })
 //       eaves to the street: a board house painted ochre, ox-blood or white with white
 //       frames (clad 'boards'), or a plastered block of flats with a cornice ('plaster')
 //   warehouse(kit, world, { x, z, ry, w, d, R })
@@ -17,19 +17,20 @@ import { KR } from './kit.js';
 const pick = (R, a) => a[(R() * a.length) | 0];
 const _t = new THREE.Color();
 const SOUPS = ['boards', 'plaster', 'brick', 'roof', 'stone', 'detail'];
-const sides = (w, d) => ({
+export const sides = (w, d) => ({
   front: { o: [-w / 2, 0, d / 2], u: [1, 0, 0], n: [0, 0, 1], W: w },
   back: { o: [w / 2, 0, -d / 2], u: [-1, 0, 0], n: [0, 0, -1], W: w },
   left: { o: [-w / 2, 0, -d / 2], u: [0, 0, 1], n: [-1, 0, 0], W: d },
   right: { o: [w / 2, 0, d / 2], u: [0, 0, -1], n: [1, 0, 0], W: d },
 });
 const BASE = -1.4;
-const open = (kit, M) => {
+// the kit's soups, set to draw at M; shut() hands them back as they were
+export const open = (kit, M) => {
   const s = {};
   for (const n of SOUPS) s[n] = kit.s(n).set(M).facing(null).warp(null);
   return s;
 };
-const shut = (s) => {
+export const shut = (s) => {
   for (const k in s) s[k].set(null).facing(null);
 };
 // a lit window, or a dark one with the last of the sky in it
@@ -64,7 +65,8 @@ export function townHouse(kit, world, o) {
   const seed = o.x * 0.31 + o.z * 0.57;
   const wallCol = (x, y, z) => _t.copy(wc).multiplyScalar((0.8 + 0.2 * Math.min(1, Math.max(0, y / 3))) * (0.88 + 0.24 * vnoise(x * 0.5 + z * 0.4 + seed, y * 0.5 + seed)));
   const wall = plaster ? s.plaster : s.boards;
-  const roofC = new THREE.Color(pick(R, KR.ROOF));
+  const slate = pick(R, KR.ROOF),
+    roofC = new THREE.Color(o.roof ?? slate);
   const roofCol = (x, y, z) => _t.copy(roofC).multiplyScalar(0.8 + 0.4 * vnoise(x * 0.5 + seed, z * 0.6 + y * 0.4));
   const lit = o.lit ?? 0.55;
   const doorC = pick(R, [0x3a2a22, 0x2a3a4a, 0x5a2a24, 0x2f4a3a, 0x4a3a2a]);
@@ -162,7 +164,7 @@ export function townHouse(kit, world, o) {
     cuboid(s.stone, [cx - 0.4, ct, cz - 0.36], [cx + 0.4, ct + 0.1, cz + 0.36], KR.STONE_D, undefined, '');
   }
   shut(s);
-  return { top: hW + rise + 0.6, hW, ridge: hW + rise };
+  return { top: hW + rise + 0.6, hW, ridge: hW + rise, doorX: -w / 2 + (doorBay + 0.5) * bw };
 }
 
 // ---------------------------------------------------------------- a warehouse on the quay

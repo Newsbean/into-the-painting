@@ -4,6 +4,7 @@
 //                (what the paint shader wants), for a blade of grass or a flower
 //   instances()  one geometry drawn in thousands of places, cut into squares of ground
 //                so that only what is in view, and near enough to matter, is drawn
+//   footprints() "is this spot taken?", asked quickly of everything a world has standing
 //   shoreZ()     where the land reaches a given height above the sea, going inland
 import * as THREE from 'three';
 import { weld } from './weld.js';
@@ -124,6 +125,38 @@ export function instances(items, geometry, material, cell = 96) {
 }
 export function show(chunks, cam, far) {
   for (const c of chunks) c.mesh.visible = Math.hypot(cam.x - c.x, cam.z - c.z) < far;
+}
+
+// Everything already standing (a world's colliders), sorted into squares of ground, so that
+// asking "is this spot taken?" tens of thousands of times stays quick.
+//   const taken = footprints(world.colliders, H)      taken(x, z, pad) -> true | false
+export function footprints(colliders, H, cell = 16) {
+  const squares = new Map();
+  for (const c of colliders) {
+    const r = c.r ?? Math.hypot(c.hw, c.hd);
+    for (let i = Math.floor((c.x - r - 1) / cell); i <= Math.floor((c.x + r + 1) / cell); i++)
+      for (let j = Math.floor((c.z - r - 1) / cell); j <= Math.floor((c.z + r + 1) / cell); j++) {
+        const k = i + ':' + j;
+        if (!squares.has(k)) squares.set(k, []);
+        squares.get(k).push(c);
+      }
+  }
+  return (x, z, pad = 0.2) => {
+    const y = H(x, z) + 0.5;
+    for (const c of squares.get(Math.floor(x / cell) + ':' + Math.floor(z / cell)) ?? []) {
+      if (y > c.top || (c.bottom !== undefined && y < c.bottom)) continue;
+      if (c.r !== undefined) {
+        if (Math.hypot(x - c.x, z - c.z) < c.r + pad) return true;
+        continue;
+      }
+      const cs = Math.cos(c.ry ?? 0),
+        sn = Math.sin(c.ry ?? 0),
+        dx = x - c.x,
+        dz = z - c.z;
+      if (Math.abs(dx * cs - dz * sn) < c.hw + pad && Math.abs(dx * sn + dz * cs) < c.hd + pad) return true;
+    }
+    return false;
+  };
 }
 
 // going inland along x, the z at which the land first stands `level` above the sea
