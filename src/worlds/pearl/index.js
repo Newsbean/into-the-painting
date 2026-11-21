@@ -136,7 +136,8 @@ export class PearlWorld extends World {
     // she looks away until the painting is finished, then over her shoulder at you
     const t = this.turn * this.turn * (3 - 2 * this.turn);
     // the generated figure is one piece: she turns on her heel instead of at the neck
-    if (this.girlModel) this.girlModel.rotation.y = lerp(2.5, this.modelYaw ?? 0.15, t);
+    // (while she is out in the town she faces whatever she is looking at there: story.js)
+    if (this.girlModel) this.girlModel.rotation.y = this.away ? this.away.ry : lerp(2.5, this.modelYaw ?? 0.15, t);
     this.girl.head.rotation.y = lerp(-0.35, 1.82, t);
     this.girl.head.rotation.x = lerp(0.12, -0.04, t);
     this.girl.head.rotation.z = lerp(0, -0.07, t);
