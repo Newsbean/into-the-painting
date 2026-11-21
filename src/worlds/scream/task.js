@@ -1,4 +1,13 @@
-// The game of The Scream: breathe.
+// The puzzle of The Scream: put his evening back together, then breathe.
+//
+// 1. Find.   The page of his diary is torn. Five lines of it lie where each one happened:
+//            on the road by his two friends, at the bench where the sun goes down, in the
+//            red sky itself, on the railing, at the end of the pier over the fjord.
+// 2. Order.  Back with him, the lines are set in the order of that evening. He says which
+//            is the first one out of place.
+// 3. Breathe (below).
+//
+// The lines are his own diary note of 1892, in plain words.
 //
 // He cannot paint the sky while it is screaming. Stand with him and breathe: hold Space as
 // the ring opens (in), let go as it closes (out), each on the beat. A breath in time
@@ -9,6 +18,14 @@
 //
 // Nothing here can frighten: there is no losing, only the sky taking longer to settle.
 const STEP = 1 / 7; // what one good breath is worth
+// the evening, in order
+const LINES = ['I was walking along the road with two friends.', 'The sun was setting.', 'Suddenly the sky turned red as blood.', 'I stopped, tired, and leaned on the railing.', 'Fire hung over the blue-black fjord and the town.'];
+const WHERE = ['where his two friends are walking', 'at the bench, where the sun goes down', 'up in the red sky, over the road', 'on the railing, down the road', 'at the end of the pier, over the fjord'];
+
+import * as THREE from 'three';
+import { beam } from '../../engine/world.js';
+import { glowSprite } from '../../engine/paint.js';
+import { dials } from '../../engine/dials.js';
 
 // the moment in a list nearest to t, between lo and hi (or null)
 function nearest(list, t, lo, hi) {
@@ -33,8 +50,23 @@ export function addTask(world, { H, back }) {
     fr.mesh.position.set(fr.x, world.groundAt(fr.x, fr.z, H(fr.x, fr.z) + 3) + Math.abs(Math.sin(fr.step)) * 0.03, fr.z);
     fr.mesh.rotation.y = fr.ry;
   };
+  // ---- the torn lines, each where it happened
+  const road = (x, off) => [x, world._roadZ(x) - off];
+  const spots = [[fr.x - 2.2, fr.z + 1.4, 1.4], [62.6, 35.6, 1.5], [18, world._roadZ(18) - 1, 24], [...road(-62, 2.4), 1.5], [-158, -148, 1.6]];
+  const torn = spots.map(([x, z, up], i) => {
+    const g = new THREE.Group(),
+      shaft = beam(0xfff0c8, 40, 0.9);
+    g.add(glowSprite(0xfff0c8, 3, 0.8), shaft);
+    g.position.set(x, world.groundAt(x, z, 99) + up, z); // (99: from above, so that the pier's deck counts)
+    g.visible = false;
+    world.scene.add(g);
+    return { g, shaft, i, got: false };
+  });
+  const order = { row: 0, picks: [4, 3, 2, 1, 0] }; // handed to you upside down
   const task = {
     done: false,
+    stage: 'find', // find -> order -> breathe
+    help: false,
     calm: 0, // 0 the scream .. 1 still
     clock: 0,
     from: 1.6, // when the breath we are in began (the first after a moment to get ready)
@@ -45,14 +77,64 @@ export function addTask(world, { H, back }) {
     was: false,
     word: 'Ready',
     glow: 0,
-    ask: ['Yes. These are the words.', 'But look at it. I cannot paint a sky that will not hold still.', 'Stand here with me a while. Breathe as I breathe. Slowly.'],
-    text: () => 'Breathe with him until the sky is still',
-    hint: () => 'Hold Space while the ring opens, and let go as it closes. Watch the ring, not the clock: no two breaths are the same length.',
-    start(game) {
-      game.hold(game.viewPose(world), 2.4);
-      game.ui.prompt('Hold Space · breathe in     let go · breathe out');
+    ask: ['Yes. That is the last line. But the page is torn: the rest of that evening has blown away.', 'Five lines. Each will have come down where it happened.', 'Bring them to me, and help me set them in order.'],
+    text: () => (task.stage === 'find' ? `Find the torn lines · ${torn.filter((t) => t.got).length} of 5` : task.stage === 'order' ? (task.at ? 'Set the evening in order' : 'Bring the lines back to Munch') : 'Breathe with him until the sky is still'),
+    hint: () => {
+      if (task.stage === 'find') {
+        task.help = true; // from now on a light shows over each
+        return `One lies ${WHERE[torn.find((t) => !t.got).i]}.`;
+      }
+      return task.stage === 'order' ? 'What came first that evening? He was walking; the sun went down; the sky changed; he stopped; he looked out over the fjord.' : 'Hold Space while the ring opens, and let go as it closes. Watch the ring, not the clock: no two breaths are the same length.';
     },
-    update(dt, game) {
+    start() {
+      for (const t of torn) t.g.visible = true;
+    },
+    update(dt, game, mark) {
+      const p = game.player.pos;
+      if (task.stage === 'find') {
+        for (const t of torn) {
+          if (t.got) continue;
+          t.shaft.visible = task.help;
+          if (task.help) mark(t.g.position, '#fff0c8');
+          if (t.g.position.distanceTo(p) > 4 + game.player.fly * 3) continue;
+          t.got = true;
+          t.g.visible = false;
+          game.stuck = 0;
+          game.audio.tone(torn.filter((q) => q.got).length, 1.4);
+          game.ui.fact('A torn line', LINES[t.i]);
+        }
+        if (torn.every((t) => t.got)) {
+          task.stage = 'order';
+          game.ui.say('The Curator', 'All five. Take them back to him, where he stopped on the road.');
+        }
+        game.refreshObjective();
+        return false;
+      }
+      if (task.stage === 'order') {
+        const e = world.echoSpot;
+        if (!task.at) {
+          mark(new THREE.Vector3(e[0], e[1] + 2, e[2]), '#ffe2a0');
+          if (Math.hypot(p.x - e[0], p.z - e[2]) > 5.5) return false;
+          task.at = true;
+          game.player.frozen = true;
+          game.refreshObjective();
+        }
+        const rows = ['First', 'Then', 'Then', 'Then', 'And then'].map((label) => ({ label, options: LINES }));
+        if (!dials(game, order, { title: 'That evening on the road', rows, note: 'Each line once, in the order it happened.' })) return false;
+        const bad = order.picks.findIndex((k, i) => k !== i);
+        if (bad >= 0) {
+          game.audio.tone(-4, 0.6, 0.9);
+          game.ui.say('Munch', bad === 0 ? 'No. It began quietly: I was only walking.' : `No. After "${LINES[bad - 1]}" something else came.`);
+          return false;
+        }
+        game.ui.mini();
+        task.stage = 'breathe';
+        game.hold(game.viewPose(world), 2.4);
+        game.ui.say('Munch', 'Yes. That was how it went. And then the scream. Stand with me. Breathe as I breathe, slowly.');
+        game.ui.prompt('Hold Space · breathe in     let go · breathe out');
+        game.refreshObjective();
+        return false;
+      }
       task.clock += dt;
       const held = game.keys.has('Space');
       if (held && !task.was) task.presses.push(task.clock);
