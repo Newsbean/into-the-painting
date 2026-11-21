@@ -9,6 +9,7 @@ import { addRoad } from './road.js';
 import { addFjord, addTown, addPeople } from './fjord-and-town.js';
 import { addMunch } from './munch/index.js';
 import { addStory } from './story.js';
+import { addKristiania, townWeight, TOWN } from './kristiania/town.js';
 
 // The Scream. This file is the world itself: its look, the line of the road, the
 // shape of the ground, and build(), which calls the parts in order. The parts are
@@ -17,7 +18,9 @@ import { addStory } from './story.js';
 //   sky.js             the sky of rolling ribbons, and his great Sun
 //   land.js            the hillside, the trees, the far shore, leaves on the wind
 //   road.js            the road and its railing
-//   fjord-and-town.js  the fjord, Kristiania and its harbour, the people
+//   fjord-and-town.js  the fjord, and the two friends on the road
+//   kristiania/        the town: the Kristiania kit (board houses, warehouses, the church,
+//                      ships, people) and the town laid out with it
 //   munch/             his other pictures, one file each (munch/index.js lists them)
 //   figure.js          the figure on the road (buildScreamer)
 //   story.js           where he stopped, the diary page, the colours and the words
@@ -67,6 +70,20 @@ export class ScreamWorld extends World {
     return lerp(6, 34, smooth(-150, -20, x)) + smooth(40, 150, x) * 8;
   }
   heightAt(x, z) {
+    // the town stands on level ground by the water (kristiania/town.js says where)
+    const h = lerp(this._hill(x, z), TOWN.y, townWeight(x, z));
+    return Math.max(h, this._island(x, z));
+  }
+  // the ground as it was when the town was a ring of boxes: only the old town's dice still ask for it
+  _oldHeight(x, z) {
+    return Math.max(lerp(this._hill(x, z), 3.2, 1 - smooth(34, 62, Math.hypot(x + 172, z + 74))), this._island(x, z));
+  }
+  // one island out in the fjord
+  _island(x, z) {
+    return 9 * Math.exp(-((x + 40) ** 2 + (z + 190) ** 2) / (2 * 30 * 30)) - 2.5;
+  }
+  // the hillside, before anything is levelled on it
+  _hill(x, z) {
     // distance north of the road line decides how far down the hill we are
     const zr = this._roadZ(x);
     const dn = zr - z; // + = towards the fjord
@@ -75,11 +92,6 @@ export class ScreamWorld extends World {
     if (dn > 0) h = ry - smooth(3.5, 60, dn) * (ry + 5) - smooth(60, 120, dn) * 3;
     else h = ry + smooth(4, 90, -dn) * 34;
     h += (fbm(x * 0.02, z * 0.02, 3) - 0.5) * 7 * smooth(5, 26, Math.abs(dn));
-    // the old town sits on flat ground by the water
-    const town = 1 - smooth(34, 62, Math.hypot(x + 172, z + 74));
-    h = lerp(h, 3.2, town);
-    // one island out in the fjord
-    h = Math.max(h, 9 * Math.exp(-((x + 40) ** 2 + (z + 190) ** 2) / (2 * 30 * 30)) - 2.5);
     return h;
   }
   _roadZ(x) {
@@ -118,7 +130,11 @@ export class ScreamWorld extends World {
 
     const B = (kit.B = new Builder());
     kit.cs = addRoad(this, kit);
-    addTown(this, kit);
+    // The ring of box houses this town used to be still throws its dice, into a builder and a
+    // world that are thrown away, so that everything random built after it stays where it was.
+    addTown({ colliders: [], glows: [], platforms: [], heightAt: (x, z) => this._oldHeight(x, z), _roadZ: (x) => this._roadZ(x) }, { ...kit, B: new Builder(), H: (x, z) => this._oldHeight(x, z), maps: { lamp() {}, blob() {} } });
+    this.town = addKristiania(this, kit);
+    this.town.tick(0, 12, { x: 2.6, y: 1.7, z: 3.1 });
     S.add(B.meshes(wavy({ stroke: strokes.oil, scale: 0.3, warp: 0.15, contrast: 0.45, hueVar: 0.4, emissive: 2.0, big: 0.5, wallStretch: 0.6 })));
 
     addTrees(this, kit);
@@ -137,6 +153,7 @@ export class ScreamWorld extends World {
   tick(dt, time, player, game) {
     // the world sways while the feeling is trapped, and settles once it is painted
     const calm = this.final;
+    if (game) this.town?.tick(dt, time, game.camera.position);
     this.pillar.material.uniforms.uAmt.value = 0.55 * this.skyRestore;
     this.sky.uniforms.uCalm.value = calm;
     if (game && game.world === this) {

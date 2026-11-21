@@ -70,6 +70,21 @@ const LOOKS = {
     cobble: (x, z) => mix(0xa89878, 0xc9b592, vnoise(x * 0.3, z * 0.3)),
     groundMat: (strokes) => paintMaterial({ stroke: strokes.cobble, scale: 0.26, contrast: 0.42, hueVar: 0.22, warp: 0, impasto: 0.08, rim: 0.04, band: 0.26, big: 0.3 }),
   },
+  // The Scream: dusk under a red sky, long swaying strokes, everything a little unsteady   (&look=scream)
+  scream: {
+    env: { sunDir: new THREE.Vector3(-0.72, 0.3, -0.5), sunColor: 0xa8663a, skyColor: 0x70749a, groundColor: 0x2a2c4c, fogColor: 0x3a3f72, fog: [0.0018, 0, 0.01, 0.62], paper: 0xeee4cf, ink: 0x3a3440, rim: 0xffb060, lamp: 1.3, wobble: 0.1, sway: 0.4 },
+    style: { kuwahara: 2.3, bloom: 0.32, threshold: 1.08, grain: 0.09, saturation: 1.16, contrast: 1.1, vignette: 0.8, warp: 0.4, outline: 0.34, ink: 0x161430 },
+    sky: /* glsl */ `
+      vec3 skyColor(vec3 d){
+        float h = clamp(d.y, 0.0, 1.0);
+        float n = texture(uNoise3, vec3(d.x * 0.9, d.y * 5.0 + uTime * 0.01, d.z * 0.9)).r;
+        vec3 c = mix(vec3(0.95, 0.55, 0.12), vec3(0.85, 0.2, 0.08), smoothstep(0.35, 0.7, n));
+        c = mix(c, vec3(0.2, 0.25, 0.5), smoothstep(0.35, 0.8, h + (n - 0.5) * 0.3));
+        return mix(uPaper * 0.97, c, uSkyRestore);
+      }`,
+    ground: (x, z) => mix(0x1a2c52, 0x2c4a5a, vnoise(x * 0.03, z * 0.03)),
+    cobble: (x, z) => mix(0x6a5a4a, 0x9a846a, vnoise(x * 0.3, z * 0.3)),
+  },
 };
 
 export async function runLab(game, ui, path, params) {

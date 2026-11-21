@@ -142,14 +142,19 @@ void main(){
 
   // ink line from depth + tone breaks
   if (uOutline + uSketchLine > 0.0){
-    float d0 = lin(texture2D(tDepth, uv).r);
+    // Depth is read at whole pixels, out from the centre of the one we are in. It cannot be
+    // filtered, so when the picture is wobbled (The Scream) a lookup part-way between two
+    // pixels landed one pixel out in some columns of the screen and two in others, and level
+    // water came out as a patchwork of lighter and darker squares.
+    vec2 dc = (floor(uv * uRes) + 0.5) * uTexel;
+    float d0 = lin(texture2D(tDepth, dc).r);
     float dn = 0.0, ln = 0.0;
     float l0 = luma(col);
     for (int i = 0; i < 4; i++){
       vec2 o = (i == 0) ? vec2(1.0, 0.0) : (i == 1) ? vec2(-1.0, 0.0) : (i == 2) ? vec2(0.0, 1.0) : vec2(0.0, -1.0);
-      o *= uTexel * 1.4;
-      dn += abs(lin(texture2D(tDepth, uv + o).r) - d0);
-      ln += abs(luma(texture2D(tScene, uv + o).rgb) - l0);
+      o *= uTexel;
+      dn += abs(lin(texture2D(tDepth, dc + o).r) - d0);
+      ln += abs(luma(texture2D(tScene, uv + o * 1.4).rgb) - l0);
     }
     float e = smoothstep(0.012, 0.05, dn / max(d0, 0.5)) + smoothstep(0.16, 0.42, ln) * 0.85;
     e *= 1.0 - smoothstep(uFar * 0.5, uFar * 0.9, d0) * 0.6;

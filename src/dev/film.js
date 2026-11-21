@@ -4,6 +4,7 @@
 //   film.setup()                     1920x1080, game loop paused, HUD hidden
 //   await film.render('<shot>')      frames -> ./capture/film/<shot>/0001.jpg ...
 //   await film.render('<shot>', { preview: 4 })   a few stills -> ./capture/prev/
+//   await film.stills('<name>', [views])          several angles on one sheet -> ./capture/prev/
 //
 // Every frame is stepped at exactly 1/30 s, so a shot renders the same however slow
 // the machine is. tools/film/assemble.sh cuts the shots together with ffmpeg.
@@ -83,8 +84,8 @@ export function installFilm(g) {
   };
 
   // toDataURL, not toBlob: in a background tab toBlob waits on idle time, about a second a frame
-  async function save(path, q = 0.93) {
-    const b64 = g.canvas.toDataURL('image/jpeg', q).split(',')[1];
+  async function save(path, q = 0.93, canvas = g.canvas) {
+    const b64 = canvas.toDataURL('image/jpeg', q).split(',')[1];
     const bin = atob(b64);
     const bytes = new Uint8Array(bin.length);
     for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
@@ -100,6 +101,29 @@ export function installFilm(g) {
     g.frame(DT);
     await save(`prev/${name}.jpg`, 0.85);
     return name;
+  }
+
+  // Several stills on one sheet, for looking a place over -> ./capture/prev/<name>.jpg
+  //   await film.stills('town', [{ p: [x, h, z], t: [x, h, z], fov }, 'view', { p, t, abs: true }])
+  // Heights are above the ground unless abs; 'view' is the painting's own view; a view's
+  // pre() runs before it is drawn.
+  async function stills(name, views, { W = 960, H = 540, cols = 4 } = {}) {
+    setup(W, H);
+    cols = Math.min(cols, views.length);
+    const c = document.createElement('canvas');
+    c.width = cols * W;
+    c.height = Math.ceil(views.length / cols) * H;
+    const x = c.getContext('2d');
+    views.forEach((v, i) => {
+      v.pre?.();
+      if (v === 'view') g.setCamera(g.viewPose(g.world));
+      else cam(v.abs ? v.p : rel(v.p), v.abs ? v.t : rel(v.t), v.fov ?? 55);
+      g.frame(v.dt ?? DT);
+      g.frame(v.dt ?? DT);
+      x.drawImage(g.canvas, (i % cols) * W, Math.floor(i / cols) * H, W, H);
+    });
+    await save(`prev/${name}.jpg`, 0.88, c);
+    return `${name} ${c.width}x${c.height}`;
   }
 
   // The game's own finale move: from a step back, in to the painting's exact view,
@@ -650,7 +674,7 @@ export function installFilm(g) {
     return { seconds: buf.duration, peak: +peak.toFixed(3), rms: +Math.sqrt(sum / d.length).toFixed(4) };
   }
 
-  const film = { st, setup, dress, cam, rel, still, render, queue, SHOTS, matte, cards, score, fly, along, V, gy, ease, out, mix3 };
+  const film = { st, setup, dress, cam, rel, still, stills, render, queue, SHOTS, matte, cards, score, fly, along, V, gy, ease, out, mix3 };
   window.film = film;
   return film;
 }
