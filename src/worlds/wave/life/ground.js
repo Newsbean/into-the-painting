@@ -9,7 +9,7 @@ import { keptClear } from '../ground-plan.js';
 import { rod } from '../helpers.js';
 import { matsu } from '../plants.js';
 import { edoWeight, CASTLE } from '../edo/town.js';
-import { Raw, instances, show, shoreZ } from './raw.js';
+import { Raw, instances, show, shoreZ } from '../../../engine/scatter.js';
 
 const UP = [0, 1, 0];
 const GREENS = [0x6f8a56, 0x8aa468, 0x5c7a4e, 0x7f9a6a, 0x4f7a5a, 0x96a86a];

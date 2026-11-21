@@ -4,8 +4,10 @@ import { paintMaterial, glowPoints, GroundMaps, G } from '../../engine/paint.js'
 import { Builder } from '../../engine/build.js';
 import { rng, fbm, smooth, clamp, lerp, damp } from '../../engine/gl.js';
 import { addSky } from './sky.js';
-import { addGround, addCanalHouses, addMarket, addChurch, addWindmill, addTreesAndTownsfolk, addFarPolder } from './town.js';
-import { addCanal, addQuays, addBridges, addTrader, addCanalBoats, addGnats } from './canal.js';
+import { addGround, addFarPolder } from './town.js';
+import { addCanal, addTrader, addGnats } from './canal.js';
+import { addDelft } from './delft/town.js';
+import { wetAt, deckAt } from './delft/plan.js';
 import { addHouse, addShafts, addMotes } from './house.js';
 import { addGirl } from './girl.js';
 import { addStory } from './story.js';
@@ -15,12 +17,13 @@ import { addStory } from './story.js';
 // head. The parts are the files beside this one:
 //
 //   sky.js      the Delft sky
-//   town.js     the ground, the canal houses, the market, the Nieuwe Kerk, the windmill, trees and townsfolk
-//   canal.js    the water, the quays and bridges, the trader and the boats
+//   town.js     the ground the town stands on, and the polder out to the horizon
+//   canal.js    the water, the trader in the harbour, the small boats
+//   delft/      the town: the Delft kit (canal houses, the Nieuwe Kerk, the town hall, the
+//               mill, the gate, the bridges, the people) and the plan it is laid out on
 //   house.js    Vermeer's house: the hall, the studio, the light through its windows
 //   girl.js     the girl (the hand-built stand-in and the loaded figure)
 //   story.js    Vermeer, the lapis, the colours and the words
-//   palette.js  brick and roof colours
 //
 // The order of the calls in build() is part of the world: every part draws from the
 // same seeded rng and most of them add to the same Builder, so moving a call moves things.
@@ -62,15 +65,15 @@ export class PearlWorld extends World {
     this.build();
   }
 
+  // the ground without its bridges: level in town, cut away for the canals (delft/plan.js),
+  // rolling a little out in the polder
   baseH(x, z) {
-    const canal = smooth(6.2, 7.2, Math.abs(z)) * (1 - smooth(140, 150, Math.abs(x)) * 0);
-    const town = 1 - smooth(110, 150, Math.hypot(x, z * 1.1));
-    return canal * 0 - (1 - canal) * 2.6 + (1 - town) * (fbm(x * 0.01, z * 0.01, 2) - 0.5) * 2 * canal;
+    const wet = wetAt(x, z);
+    const town = 1 - smooth(120, 160, Math.hypot(x, z * 1.05));
+    return -2.6 * wet + (1 - wet) * (1 - town) * Math.max(-0.5, (fbm(x * 0.01, z * 0.01, 2) - 0.5) * 2);
   }
   heightAt(x, z) {
-    // two humpback bridges
-    for (const bx of [0, -64]) if (Math.abs(x - bx) < 3.3 && Math.abs(z) < 10.5) return 2.1 * Math.cos((z / 10.5) * Math.PI * 0.5);
-    return this.baseH(x, z);
+    return deckAt(x, z) ?? this.baseH(x, z);
   }
 
   build() {
@@ -98,20 +101,16 @@ export class PearlWorld extends World {
 
     const B = (kit.B = new Builder());
     kit.proxy = { heightAt: H, colliders: this.colliders, maps, glows: this.glows };
-    addQuays(this, kit);
-    addBridges(this, kit);
-    addCanalHouses(this, kit);
-    addMarket(this, kit);
-    addChurch(this, kit);
+    this.platforms = [];
     addTrader(this, kit);
-    addCanalBoats(this, kit);
-    addWindmill(this, kit);
     addHouse(this, kit);
     S.add(B.meshes(soft({ stroke: strokes.soft, scale: 0.3, contrast: 0.2, hueVar: 0.16, emissive: 2.3 })));
+    // the town, and everyone in it
+    this.delft = addDelft(this, kit);
+    this.delft.tick(0, 12, { x: 34, y: 2, z: -20 });
 
     addShafts(this, kit);
     addGirl(this, kit);
-    addTreesAndTownsfolk(this, kit);
     addFarPolder(this, kit);
 
     // motes in the studio light, gnats over the canal
@@ -130,8 +129,9 @@ export class PearlWorld extends World {
     this.turnTarget = 1;
   }
 
-  tick(dt, time) {
+  tick(dt, time, player, game) {
     this.sails.rotation.x = time * 0.35;
+    if (game) this.delft?.tick(dt, time, game.camera.position);
     if (this.stage === 'finale' || this.done) this.turn = damp(this.turn, 1, 0.55, dt);
     // she looks away until the painting is finished, then over her shoulder at you
     const t = this.turn * this.turn * (3 - 2 * this.turn);

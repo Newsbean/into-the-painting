@@ -50,7 +50,8 @@ export function addHouse(world, kit) {
   B.box(12, 0.3, 11.5, 0x3a2c20, 34, CE, -30.25);
   for (let x = X0 + 1; x < X1; x += 1.6) B.box(0.3, 0.35, 11.5, 0x2a1e16, x, CE - 0.35, -30.25);
   B.gable(13.4, 12.6, 5.4, 0xa84e2c, 34, 9.4, -30.25, 0);
-  for (const sgn of [-1, 1]) for (let s = 0; s < 4; s++) B.box(12.6 * (1 - s / 4) + 0.3, 1.6, 0.4, brick, 34, 9.4 + s * 1.35, -30.25 + sgn * 6.3);
+  // (stepped at the back; the front it shows to the canal is built in delft/town.js)
+  for (let s = 0; s < 4; s++) B.box(12.6 * (1 - s / 4) + 0.3, 1.6, 0.4, brick, 34, 9.4 + s * 1.35, -30.25 - 6.3);
   world.rooms.push({ minx: X0 + 0.3, maxx: X1 - 0.3, minz: Z0 + 0.3, maxz: Z1 - 0.2, ceil: CE - 0.5 });
   // the hall: an archway through to the studio, a chest, pictures, a coat on its peg
   for (const sx of [-1, 1]) {

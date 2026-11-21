@@ -54,6 +54,10 @@ src/
     build.js           Builder: merge tinted boxes, cylinders, roofs, trees into one mesh; terrain(), tiles()
     soup.js            Soup: the fast path for thousands of small faces (walls, reveals, roofs)
     weld.js            weld(): joins the corners loose triangles share, so less is sent to the graphics card
+    scatter.js         Raw and instances(): one small geometry in thousands of places (grass, stones, trees)
+    walkers.js         people walking along ways: way(), Walkers, stand()
+    flock.js           birds on the wing: cranes, gulls, pigeons
+    air.js             petals on the wind, smoke from the roofs
     facade.js          walls with openings, reveals, slabs: the pieces of any facade
     kit.js             Kit: a block of buildings as a few merged meshes plus instanced details
     plan.js            town planning: rows of lots along both sides of every street
@@ -64,6 +68,8 @@ src/
     sky.js terrain.js ...   one file per subject
     <set pieces>/      one file per set piece (vincent/, prints/, munch/, notebooks/)
   worlds/starry/town/  the town kit: house generator, facade parts, planner, church
+  worlds/wave/edo/     the Edo kit: merchant houses, storehouses, farmhouses, pagoda, castle
+  worlds/pearl/delft/  the Delft kit: canal houses, the Nieuwe Kerk, town hall, mill, gate, ship
   dev/               development only, never shipped: lab.js, film.js
 ```
 
@@ -149,12 +155,27 @@ Lab: `/?debug&look=wave&lab=worlds/wave/edo/lab.js`
 | `life/ground.js` | what covers the ground: grass, flowers, bushes, stones, the hill forest, beach gear, Edo's pines and moored boats |
 | `life/walkers.js` | people walking the roads, and the daimyo's procession on the Tokaido |
 | `life/sea-sky.js` | cranes and gulls with beating wings, coasters under sail |
-| `life/air.js` | cherry petals on the wind, smoke from the roofs |
-| `life/raw.js` | the tools those share: `Raw` (triangles with colour, sway and tint), `instances()` (one geometry in thousands of places, culled by square of ground), `shoreZ()` |
 
 Everything in `life/` has its own dice and is built last, so adding to it never moves
-anything else. The surf on the beach and the foam lines on the swell are two switches
-on the engine's water paint: `waterMaterial({ shore: 1, lace: 0.6 })`.
+anything else. The tools it uses are the engine's (`scatter.js`, `walkers.js`, `flock.js`,
+`air.js`), so any world can have the same. The surf on the beach and the foam lines on
+the swell are two switches on the engine's water paint: `waterMaterial({ shore: 1, lace: 0.6 })`.
+
+## The Delft kit (`src/worlds/pearl/delft`)
+
+Girl with a Pearl Earring's town, about 1660: brick, pale stone, red shutters, water.
+
+| File | What it gives you |
+|---|---|
+| `kit.js` | `delftMaterials(strokes)`, `DelftKit`, and the parts: cross-windows with shutters, doors, shop awnings, hoists, lanterns, signs, wall ties, barrels, crates, market stalls |
+| `house.js` | `canalHouse(...)`: narrow and tall, stepped or spout gable, stone bands, shop or door; `front: true` dresses a wall that already stands |
+| `landmarks.js` | `nieuweKerk`, `stadhuis`, `mill` and `millSails`, `gate`, `bridge` |
+| `ship.js` | `trader` (the fluyt in the harbour) and `barge` |
+| `people.js` | burghers, women, maids, boys; `delftCrowd` stands them about the streets |
+| `plan.js` | the ground plan: where the canals and the harbour are, the bridges, the streets |
+| `town.js` | Delft itself: houses, quays, market, trees, people walking, barges, birds, smoke |
+
+Lab: `/?debug&look=pearl&lab=worlds/pearl/delft/lab.js` (add `&show=church`, `hall` or `mill`)
 
 ## House rules
 

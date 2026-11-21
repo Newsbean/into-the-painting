@@ -106,7 +106,8 @@ export class Game {
     window.addEventListener('keyup', (e) => this.keys.delete(e.code));
     window.addEventListener('blur', () => this.keys.clear());
     c.addEventListener('click', () => {
-      if (this.mode === 'play' && document.pointerLockElement !== c) c.requestPointerLock?.();
+      // (where the browser will not hand over the pointer, an embedded preview for one, dragging still looks about)
+      if (this.mode === 'play' && document.pointerLockElement !== c) c.requestPointerLock?.()?.catch?.(() => {});
     });
     document.addEventListener('pointerlockchange', () => {
       this.locked = document.pointerLockElement === c;

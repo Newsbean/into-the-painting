@@ -90,7 +90,7 @@ something you add moves those numbers a lot, look at these first:
   from a geometry yourself, pass the geometry through `weld()` last.
 - **Let it be skipped.** One huge mesh is always drawn, even when it is behind you. Use
   `Builder.meshes()` rather than `mesh()` for anything spread over the land, `tiles()` for
-  a terrain or a sea, and `instances()` (`worlds/wave/life/raw.js`) for scattered things.
+  a terrain or a sea, and `instances()` (`engine/scatter.js`) for scattered things.
 - **Draw less of it far away.** Fine detail goes into a kit's instanced parts, which are
   switched off beyond a hundred metres or so; a whole block of a town gives way to plain
   stand-ins further off (`house.js` and `town.js` in `worlds/starry/town`).

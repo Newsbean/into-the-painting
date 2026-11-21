@@ -10,7 +10,7 @@ import { Builder } from '../../../engine/build.js';
 import { Soup } from '../../../engine/soup.js';
 import { rng } from '../../../engine/gl.js';
 import { weld } from '../../../engine/weld.js';
-import { trace } from '../../../engine/plan.js';
+import { Walkers, way as wayOn, stand } from '../../../engine/walkers.js';
 import { edoPerson } from '../edo/people.js';
 import { edoStreets } from '../edo/town.js';
 import { ROAD_W, ROAD_M, ROAD_E, PATH_FALL, PATH_SHRINE, PATH_HALL, PATH_PASS } from '../ground-plan.js';
@@ -98,32 +98,16 @@ export function addWalkers(world, { S, H }) {
   const F = figures(R);
   const mat = world.edoKit.mats.detail;
 
-  // the ways people go, each a line of points a metre apart with the height of the ground under it
-  const way = (pts) => {
-    const Tr = trace(pts, 1);
-    for (const p of Tr) p.y = world.groundAt(p.x, p.z, H(p.x, p.z) + 3);
-    return Tr;
-  };
+  // the ways people go (engine/walkers.js gives each a line of points with the ground's height under it)
+  const way = (pts) => wayOn(world, pts);
   const road = way(tokaido());
   const ways = [road, ...edoStreets().filter((s) => s.name !== 'tokaido').map((s) => way(s.pts)), way(PATH_FALL), way(PATH_SHRINE), way(PATH_HALL), way(PATH_PASS)];
   const share = [70, 16, 12, 9, 12, 9, 5, 4, 4, 4]; // how many walk each
 
   // ---- everyone who is simply out walking
-  const walkers = [];
-  ways.forEach((Tr, wi) => {
-    for (let i = 0; i < (share[wi] ?? 4); i++) {
-      const off = 0.5 + R() * (wi ? 0.7 : 1.5);
-      walkers.push({ Tr, s: 2 + R() * (Tr.length_ - 4), dir: R() < 0.5 ? 1 : -1, v: 0.85 + R() * 0.6, off, lat: off, t: 0, ph: R() * 6.283, kind: (R() * F.folk.length) | 0, k: 0.94 + R() * 0.12 });
-    }
-  });
-  const pools = F.folk.map((geo, kind) => {
-    const list = walkers.filter((w) => w.kind === kind);
-    const im = new THREE.InstancedMesh(geo, mat, Math.max(1, list.length));
-    im.count = list.length;
-    im.frustumCulled = false;
-    S.add(im);
-    return { im, list };
-  });
+  const folk = new Walkers(S, mat, F.folk);
+  ways.forEach((Tr, wi) => folk.add(Tr, share[wi] ?? 4, R, { wide: wi ? 0.7 : 1.5 }));
+  folk.build();
 
   // ---- the procession: who walks where in the column. [figure, metres behind the head, metres left of the middle]
   const column = [];
@@ -168,48 +152,12 @@ export function addWalkers(world, { S, H }) {
     S.add(p.im);
   }
   let head = road.length_ * 0.36; // they start out east of the workshop, in sight of the pier
-  console.log('wave: walkers', walkers.length, '+ procession of', column.length);
-
-  const m4 = new THREE.Matrix4(),
-    q = new THREE.Quaternion(),
-    e = new THREE.Euler(),
-    p = new THREE.Vector3(),
-    sc = new THREE.Vector3();
-  // a figure at s metres along a way, `lat` to the left of it, facing the way it is going
-  const stand = (im, i, Tr, s, lat, dir, step, k, cam) => {
-    const f = (s / Tr.length_) * (Tr.length - 1);
-    if (f < 0 || f > Tr.length - 1) return im.setMatrixAt(i, m4.makeScale(0, 0, 0));
-    const i0 = Math.min(Tr.length - 2, f | 0),
-      t = f - i0,
-      a = Tr[i0],
-      b = Tr[i0 + 1];
-    const tx = a.tx + (b.tx - a.tx) * t,
-      tz = a.tz + (b.tz - a.tz) * t;
-    const x = a.x + (b.x - a.x) * t - tz * lat,
-      z = a.z + (b.z - a.z) * t + tx * lat;
-    // out of sight, out of mind: nothing is drawn of those too far off to see
-    if ((x - cam.x) ** 2 + (z - cam.z) ** 2 > 330 * 330) return im.setMatrixAt(i, m4.makeScale(0, 0, 0));
-    q.setFromEuler(e.set(0, Math.atan2(tx * dir, tz * dir), Math.sin(step) * 0.035, 'YXZ'));
-    im.setMatrixAt(i, m4.compose(p.set(x, a.y + (b.y - a.y) * t + Math.abs(Math.sin(step)) * 0.035, z), q, sc.setScalar(k)));
-  };
+  console.log('wave: walkers', folk.all.length, '+ procession of', column.length);
 
   return {
     tick(dt, time, cam) {
-      for (const { im, list } of pools) {
-        list.forEach((w, i) => {
-          // on the highway everyone stands aside for the procession, and waits until it has gone by
-          const aside = w.Tr === road && w.s > head - columnLength - 2 && w.s < head + 7;
-          if (!aside) {
-            w.s += w.dir * w.v * dt;
-            w.t += dt;
-            if (w.s > w.Tr.length_ - 1.5) w.dir = -1;
-            else if (w.s < 1.5) w.dir = 1;
-          }
-          w.lat += ((aside ? 3.2 : w.off) - w.lat) * Math.min(1, dt * 1.6);
-          stand(im, i, w.Tr, w.s, w.dir * w.lat, w.dir, w.t * w.v * 3.3 + w.ph, w.k, cam);
-        });
-        im.instanceMatrix.needsUpdate = true;
-      }
+      // on the highway everyone stands aside for the procession, and waits until it has gone by
+      folk.tick(dt, time, cam, (w) => w.Tr === road && w.s > head - columnLength - 2 && w.s < head + 7);
       // the column keeps its order; when its tail has passed into Edo it sets out again from the east
       head += 0.8 * dt;
       if (head > road.length_ + columnLength) head = 0;

@@ -54,6 +54,22 @@ const LOOKS = {
     cobble: (x, z) => mix(0xd8cba8, 0xc9bb94, vnoise(x * 0.3, z * 0.3)),
     groundMat: (strokes) => paintMaterial({ stroke: strokes.wood, scale: 0.05, contrast: 0.14, hueVar: 0.1, warp: 0.05, flat: 0.72, rim: 0, band: 0.08, impasto: 0, big: 0 }),
   },
+  // Delft: low gold afternoon light, thin glazes, an old master's surface   (&look=pearl)
+  pearl: {
+    env: { sunDir: new THREE.Vector3(-0.72, 0.36, 0.3).normalize(), sunColor: 0xd9a868, skyColor: 0x8f96a8, groundColor: 0x5c4e42, fogColor: 0xe9cfa6, fog: [0.0042, 0, 0.02, 0.8], paper: 0xf1e8d4, ink: 0x45403a, rim: 0xffe9a0, lamp: 1.2, sway: 0.18 },
+    style: { kuwahara: 2.1, bloom: 0.42, threshold: 1.02, soft: 0.1, grain: 0.07, crackle: 0.07, saturation: 1.08, contrast: 1.08, vignette: 0.75, tint: [1.03, 1.0, 0.93], outline: 0.1, ink: 0x2a2018 },
+    sky: /* glsl */ `
+      vec3 skyColor(vec3 d){
+        float h = clamp(d.y, 0.0, 1.0);
+        vec3 c = mix(vec3(0.98, 0.84, 0.62), vec3(0.36, 0.52, 0.74), pow(smoothstep(0.0, 0.75, h), 0.7));
+        float n = texture(uNoise3, d * 1.4 + vec3(uTime * 0.004, 0.0, 0.0)).r;
+        c = mix(c, vec3(1.0, 0.93, 0.80), smoothstep(0.5, 0.66, n) * smoothstep(0.02, 0.2, h) * 0.8);
+        return mix(uPaper * 0.97, c, uSkyRestore);
+      }`,
+    ground: (x, z) => mix(0x7f9a4a, 0xb0b458, vnoise(x * 0.02, z * 0.04)),
+    cobble: (x, z) => mix(0xa89878, 0xc9b592, vnoise(x * 0.3, z * 0.3)),
+    groundMat: (strokes) => paintMaterial({ stroke: strokes.cobble, scale: 0.26, contrast: 0.42, hueVar: 0.22, warp: 0, impasto: 0.08, rim: 0.04, band: 0.26, big: 0.3 }),
+  },
 };
 
 export async function runLab(game, ui, path, params) {

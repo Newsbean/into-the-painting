@@ -1,8 +1,11 @@
-// What drifts in the air over the land: cherry petals carried on the wind, wherever
-// you stand, and the smoke of cooking fires climbing from the roofs.
+// What drifts in the air, for any world: petals (or leaves, or snow) carried on the wind
+// wherever you stand, and smoke climbing from roofs.
+//
+//   addPetals(scene, { count, box, wind, colors, landZ })
+//   addSmoke(scene, hearths, { color, wind })      hearths: [[x, y, z], ...]
 import * as THREE from 'three';
-import { G, COMMON_GLSL } from '../../../engine/paint.js';
-import { rng } from '../../../engine/gl.js';
+import { G, COMMON_GLSL } from './paint.js';
+import { rng } from './gl.js';
 
 // ---------------------------------------------------------------- petals
 // The petals fill a box that travels with the camera: one that drifts out of one side
@@ -13,6 +16,7 @@ attribute vec4 aSeed;   // where in the box (0..1), and its own number
 uniform float uPixel;
 uniform vec3 uBox;
 uniform vec3 uWind;
+uniform vec2 uLandZ;    // they are only seen where z runs from below .x to above .y
 varying float vA;
 varying float vPh;
 void main(){
@@ -22,12 +26,12 @@ void main(){
   q.x += sin(uTime * 1.3 + n * 40.0) * 0.6;
   q.z += cos(uTime * 1.1 + n * 23.0) * 0.6;
   vec3 p = mod(q - cameraPosition, uBox) - uBox * 0.5 + cameraPosition;
-  // they blow in drifts, only over the land, and never under it
+  // they blow in drifts, and never under the ground
   float drift = smoothstep(0.38, 0.6, texture2D(uNoise, p.xz * 0.004 + uTime * 0.004).r);
   float gh = texture2D(uHeightMap, p.xz * uMapXf.xy + uMapXf.zw).r;
   vec3 e = abs(p - cameraPosition) / (uBox * 0.5);
   float rim;
-  vA = drift * smoothstep(188.0, 206.0, p.z) * step(max(gh, 0.0) + 0.05, p.y)
+  vA = drift * smoothstep(uLandZ.x, uLandZ.y, p.z) * step(max(gh, 0.0) + 0.05, p.y)
      * (1.0 - smoothstep(0.75, 1.0, max(e.x, max(e.y, e.z))))
      * (0.2 + 0.8 * restoreAt(p, 0.0, rim));
   vPh = n;
@@ -38,6 +42,8 @@ void main(){
 `;
 const PETAL_FRAG = /* glsl */ `
 uniform float uTime;
+uniform vec3 uColA;
+uniform vec3 uColB;
 varying float vA;
 varying float vPh;
 void main(){
@@ -48,29 +54,37 @@ void main(){
   float d = length(c * vec2(1.0, 1.7 + 0.8 * sin(uTime * 2.3 + vPh * 31.0))) * 2.0;
   float al = (1.0 - smoothstep(0.8, 1.0, d)) * vA;
   if (al < 0.04) discard;
-  gl_FragColor = vec4(mix(vec3(0.96, 0.78, 0.83), vec3(1.0, 0.94, 0.94), fract(vPh * 7.0)), al);
+  gl_FragColor = vec4(mix(uColA, uColB, fract(vPh * 7.0)), al);
 }
 `;
 
-export function addPetals(world, { S }) {
-  const R = rng(331);
-  const n = 800;
+export function addPetals(scene, o = {}) {
+  const R = rng(o.seed ?? 331);
+  const n = o.count ?? 800;
   const seed = new Float32Array(n * 4);
   for (let i = 0; i < n * 4; i++) seed[i] = R();
   const geo = new THREE.BufferGeometry();
   geo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(n * 3), 3));
   geo.setAttribute('aSeed', new THREE.BufferAttribute(seed, 4));
+  const [ca, cb] = o.colors ?? [0xf5c7d4, 0xfff0f0];
   const mat = new THREE.ShaderMaterial({
     vertexShader: PETAL_VERT,
     fragmentShader: PETAL_FRAG,
-    uniforms: { ...G, uBox: { value: new THREE.Vector3(70, 26, 70) }, uWind: { value: new THREE.Vector3(1.5, 0, 0.5) } },
+    uniforms: {
+      ...G,
+      uBox: { value: new THREE.Vector3(...(o.box ?? [70, 26, 70])) },
+      uWind: { value: new THREE.Vector3(...(o.wind ?? [1.5, 0, 0.5])) },
+      uLandZ: { value: new THREE.Vector2(...(o.landZ ?? [-1e6, -1e6 + 1])) },
+      uColA: { value: new THREE.Color(ca) },
+      uColB: { value: new THREE.Color(cb) },
+    },
     transparent: true,
     depthWrite: false,
   });
   const pts = new THREE.Points(geo, mat);
   pts.frustumCulled = false;
   pts.renderOrder = 8;
-  S.add(pts);
+  scene.add(pts);
   return pts;
 }
 
@@ -109,8 +123,8 @@ void main(){
 `;
 
 // hearths: [[x, y, z], ...] where a plume leaves a roof
-export function addSmoke(world, { S }, hearths) {
-  const R = rng(72);
+export function addSmoke(scene, hearths, o = {}) {
+  const R = rng(o.seed ?? 72);
   const per = 9,
     n = hearths.length * per;
   const pos = new Float32Array(n * 3),
@@ -129,13 +143,13 @@ export function addSmoke(world, { S }, hearths) {
   const mat = new THREE.ShaderMaterial({
     vertexShader: SMOKE_VERT,
     fragmentShader: SMOKE_FRAG,
-    uniforms: { ...G, uWind: { value: new THREE.Vector3(1.5, 0, 0.5) }, uColor: { value: new THREE.Color(0xe6dfcc) } },
+    uniforms: { ...G, uWind: { value: new THREE.Vector3(...(o.wind ?? [1.5, 0, 0.5])) }, uColor: { value: new THREE.Color(o.color ?? 0xe6dfcc) } },
     transparent: true,
     depthWrite: false,
   });
   const pts = new THREE.Points(geo, mat);
   pts.frustumCulled = false;
   pts.renderOrder = 7;
-  S.add(pts);
+  scene.add(pts);
   return pts;
 }
