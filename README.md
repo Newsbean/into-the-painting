@@ -12,8 +12,13 @@ colour back. Each world starts as a pencil sketch and is painted in as you explo
 | V | *Mona Lisa*, Leonardo da Vinci, c. 1503 | `src/worlds/mona` |
 | hub | The Gallery Between | `src/worlds/gallery` |
 
-Everything you see is built from code at load time: geometry, brush textures, skies,
-music. There are no image files of the paintings in the project, and there should never be.
+Every world is built from code at load time: geometry, brush textures, skies, music. The
+only pictures in the project are the five paintings themselves, which hang on the gallery
+wall (the Great Wave's puzzle also pulls its print from its own): see
+`public/paintings/CREDITS.md`.
+
+**Play it: https://into-the-painting.vercel.app** (it builds all six worlds when it opens,
+which takes about half a minute; it needs a browser that draws WebGL2 on the graphics card).
 
 ## Run it
 

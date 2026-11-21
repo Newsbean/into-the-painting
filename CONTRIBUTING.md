@@ -24,6 +24,11 @@ that has WebGL2 (Chrome, Edge, Firefox or Safari; Windows, macOS or Linux).
 | `npm run dev:steady` | no automatic reload: for recording the film and for automated runs |
 | `npm run check` | what CI runs: import paths, undefined names, production build |
 | `npm run build` | the static site in `dist/` |
+| `npm run preview` | serves `dist/` as it was built, to try the real thing before it goes out |
+
+The game is published at https://into-the-painting.vercel.app. It goes out by hand: from a
+checkout linked to the Vercel project (`vercel link`), `vercel deploy --prod`. Pushing to
+GitHub does not publish anything.
 
 You do not need the whole game to see your work. `/?only=wave` builds one world in about
 twenty seconds; the asset lab (`/?debug&lab=<module>`, see the README) shows one asset in

@@ -6,5 +6,7 @@ capture
 refs
 *.log
 .vercel
+# (the Vercel CLI writes a token here when the folder is linked)
+.env*
 .DS_Store
 Thumbs.db

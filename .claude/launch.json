@@ -9,6 +9,18 @@
         "dev:steady"
       ],
       "port": 5173
+    },
+    {
+      "name": "into-the-painting-built",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": [
+        "vite",
+        "preview",
+        "--port",
+        "4173",
+        "--strictPort"
+      ],
+      "port": 4173
     }
   ]
 }
