@@ -25,6 +25,7 @@ export class Game {
     this.mode = 'boot';
     this.input = { mx: 0, mz: 0, fly: false, run: false, lookX: 0, lookY: 0 };
     this.keys = new Set();
+    this.pressed = new Set();
     this.worlds = {};
     this.order = [];
     this.world = null;
@@ -100,6 +101,7 @@ export class Game {
     window.addEventListener('keydown', (e) => {
       if (e.repeat) return;
       this.keys.add(e.code);
+      this.pressed.add(e.code); // went down since the last frame: what a minigame listens for
       if (e.code === 'Space') e.preventDefault();
       if (e.code === 'KeyM') this.audio.toggleMute();
     });
@@ -165,6 +167,14 @@ export class Game {
     cam.updateProjectionMatrix();
     this.player.cinematic = true;
     return pose;
+  }
+
+  // A minigame takes the camera: the player stands still while it is played. (The finale,
+  // which follows every minigame, gives both back.)
+  hold(pose, dur = 1.8) {
+    this.player.frozen = true;
+    this.player.cinematic = true;
+    return this.tweenCamera(pose, dur);
   }
 
   // ---------------------------------------------------------------- world switching
@@ -393,10 +403,12 @@ export class Game {
     this.refreshObjective();
   }
 
-  // The artist has what was lost, and asks for the one thing the picture still needs.
+  // The artist has what was lost, and asks for the one thing the picture still needs: a
+  // game of its own, different in every world (worlds/<id>/task.js).
   // A world's task is { ask: [lines], text(world) -> the objective, start(game),
-  // update(dt, game, mark) -> true when it is done }; mark(position, colour) puts a
-  // marker at the edge of the view.
+  // update(dt, game, mark) -> true when it is won }; mark(position, colour) puts a
+  // marker at the edge of the view. It reads game.keys (held) and game.pressed (just gone
+  // down), and shows itself with ui.meter, ui.prompt and ui.mini.
   startTask() {
     const w = this.world;
     w.stage = 'task';
@@ -537,6 +549,7 @@ export class Game {
     }
     this.audio.setWind(this.player.fly * clamp(this.player.speed / 18 + 0.25));
     this.input.lookX = this.input.lookY = 0;
+    this.pressed.clear();
 
     G.uPixel.value = this.rh / (2 * Math.tan((cam.fov * Math.PI) / 360));
     w.sky?.bake(this.renderer, dt);

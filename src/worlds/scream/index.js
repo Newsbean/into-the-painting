@@ -170,7 +170,7 @@ export class ScreamWorld extends World {
 
   tick(dt, time, player, game) {
     // the world sways while the feeling is trapped, and settles once it is painted
-    const calm = this.final;
+    const calm = Math.max(this.final, this.calm ?? 0); // (the breathing game steadies it too: task.js)
     if (game) {
       this.town?.tick(dt, time, game.camera.position);
       this.country?.tick(dt, time, game.camera.position);

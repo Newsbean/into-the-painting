@@ -84,6 +84,31 @@ export class UI {
     $('objective').textContent = text;
   }
 
+  // a slim bar under the objective: time left, breaths taken, rounds won. meter(null) hides it.
+  meter(v, label = '') {
+    const el = $('meter');
+    if (v === null || v === undefined) return el.classList.remove('show');
+    el.classList.add('show');
+    el.firstElementChild.style.width = `${Math.max(0, Math.min(1, v)) * 100}%`;
+    el.lastElementChild.textContent = label;
+  }
+  // a sheet in the middle of the screen (or at its right-hand side) for a minigame to draw
+  // on; mini() takes it away
+  mini(w, h, side = false) {
+    const c = $('mini');
+    if (!w) {
+      c.classList.remove('show');
+      return null;
+    }
+    if (c.width !== w || c.height !== h) {
+      c.width = w;
+      c.height = h;
+    }
+    c.classList.add('show');
+    c.classList.toggle('side', side);
+    return c.getContext('2d');
+  }
+
   // ---------- big title card
   async card(kicker, title, sub, hold = 3600) {
     $('card-kicker').textContent = kicker;

@@ -258,6 +258,12 @@ export class GameAudio {
   }
 
   // ---------- one-shots
+  // one clear note of the world's own scale: a minigame's cue, or its answer
+  tone(k = 0, len = 0.9, vel = 1) {
+    if (!this.ctx) return;
+    const W = WORLDS[this.world] ?? WORLDS.gallery;
+    this.voice('bell', this.note(k, W, 2), this.ctx.currentTime + 0.01, len, vel, this.sfx);
+  }
   chime(k = 0, at) {
     if (!this.ctx) return;
     const W = WORLDS[this.world] ?? WORLDS.gallery;

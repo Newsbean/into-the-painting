@@ -3,7 +3,7 @@ import { ghostMaterial } from '../../engine/world.js';
 import { paintMaterial } from '../../engine/paint.js';
 import { Builder, figure, mix, xf } from '../../engine/build.js';
 import { vnoise } from '../../engine/gl.js';
-import { MARKET } from './delft/plan.js';
+import { addTask } from './task.js';
 
 // ---------------- story
 export function addStory(world, kit) {
@@ -43,55 +43,7 @@ export function addStory(world, kit) {
     },
     exit: { pos: [34, 0, -19.5], ry: 0 },
   });
-  // ---- the task: she has slipped out while he waited for his blue. Find her in the town.
-  // She is somewhere on the market square, among the stalls and the people; nothing points
-  // to her until the curator has given two clues.
-  const HOME = [33.98, 0.06, -33.4];
-  const spot = [[MARKET.x + 9, MARKET.z + 15], [MARKET.x - 8, MARKET.z + 10], [MARKET.x + 5, MARKET.z - 8], [MARKET.x - 12, MARKET.z - 14]].find(([x, z]) => !world.blocked(x, world.heightAt(x, z) + 1, z)) ?? [MARKET.x, MARKET.z];
-  const stand = (x, y, z) => {
-    world.girl.group.position.set(x, y, z);
-    world.girlModel?.position.set(x, y, z);
-  };
-  const clues = [
-    'She took her basket with her. On a market day there is one place a girl goes with a basket.',
-    'The market square, under the tower of the New Church. Look among the stalls for a blue and yellow scarf.',
-    'There, by the stalls: the light has found her earring.',
-  ];
-  const task = (world.task = {
-    done: false,
-    found: false,
-    clue: 0,
-    ask: ['Lapis. Real lapis. Then I can finish her today.', 'But look, she has slipped out while I waited for my blue.', 'She cannot be far. Find her for me. You will know her by the scarf.'],
-    text: () => (task.found ? 'She has gone home ahead of you · go back to Vermeer' : 'Find her in the town · a blue and yellow scarf'),
-    start(game) {
-      const y = world.heightAt(spot[0], spot[1]);
-      stand(spot[0], y, spot[1]);
-      world.away = { ry: Math.atan2(MARKET.x - spot[0], MARKET.z - spot[1]) }; // looking across the square
-      world.bloom(new THREE.Vector3(HOME[0], 1, HOME[2]), 9);
-      game.ui.say('The Curator', clues[0]);
-      task.clue = 1;
-    },
-    update(dt, game, mark) {
-      const p = game.player.pos;
-      if (!task.found) {
-        const y = world.heightAt(spot[0], spot[1]);
-        if (task.clue >= 3) mark(new THREE.Vector3(spot[0], y + 2.2, spot[1]), '#8fb0ff');
-        if (Math.hypot(p.x - spot[0], p.z - spot[1]) < 3.6 && Math.abs(p.y - y) < 5) {
-          task.found = true;
-          game.stuck = 0;
-          game.audio.chime(1);
-          world.bloom(new THREE.Vector3(spot[0], y + 1, spot[1]), 24);
-          stand(...HOME);
-          world.away = null;
-          game.ui.say('The Curator', 'There she is, with the light on her scarf. She has seen you: she is hurrying home ahead of you.');
-          game.refreshObjective();
-        }
-        return false;
-      }
-      mark(new THREE.Vector3(37.6, 2.1, -32.4), '#ffe2a0');
-      return Math.hypot(p.x - 37.6, p.z + 32.4) < 5.5 && Math.abs(p.y - 0.06) < 6;
-    },
-  });
+  const task = addTask(world, { strokes }); // the game of this picture: task.js
   world.finalFact = 'The blue of her scarf is ultramarine. The painting hangs in the Mauritshuis in The Hague.';
   world.finalLine = 'The last stroke: the blue of the scarf, and she turns.';
   world.hints = {
@@ -99,7 +51,6 @@ export function addStory(world, kit) {
     high: 'One colour is caught on the windmill at the edge of town. Hold Space to ride the wind.',
     memento: 'A trading ship has tied up at the east end of the canal. The stone is up in its rigging.',
     echo: 'Bring the lapis to Vermeer, in the studio with the tall windows.',
-    // each time you are lost for a while, one more clue; after the last, a light shows where she is
-    task: () => (task.found ? 'She is back in the studio. Vermeer is waiting, by the tall windows.' : clues[Math.min(clues.length - 1, task.clue++)]),
+    task: () => task.hint(),
   };
 }
