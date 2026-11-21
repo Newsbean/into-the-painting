@@ -134,5 +134,6 @@ export const kristianiaParts = () => (LIB ??= makeParts());
 export class KristianiaKit extends Kit {
   constructor(mats) {
     super(mats, kristianiaParts());
+    this.pal = KR; // what engine/townhouse.js paints its houses from
   }
 }

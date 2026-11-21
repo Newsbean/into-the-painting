@@ -1,5 +1,5 @@
 import { blobTree, house } from '../../../engine/build.js';
-import { townHouse } from '../kristiania/house.js';
+import { townHouse } from '../../../engine/townhouse.js';
 import { PIER } from '../kristiania/town.js';
 import { YARDS, local } from '../country/plan.js';
 

@@ -14,6 +14,8 @@ import { buildNotebooks, tickNotebooks } from './notebooks/index.js';
 import { seatLisa, tickLisa } from './lisa.js';
 import { buildTravellers } from './travellers.js';
 import { buildStory } from './story.js';
+import { TuscanKit, tuscanMaterials } from './tuscany/kit.js';
+import { addTuscany } from './tuscany/index.js';
 
 // Leonardo's dream of Tuscany: every edge dissolved in haze. No lines, only
 // smoke: sfumato.
@@ -120,6 +122,13 @@ export class MonaWorld extends World {
     // the mill all go into; proxy is what the engine's house() asks of a world; the rest
     // is where the landmarks stand. buildRoads adds roadSamples and nearRoad.
     const kit = { strokes, noise3, R, S, H, maps, soft, B, proxy, LY, TX, TZ, CX, CZ, CY };
+    // the Tuscan kit (tuscany/): its materials, one kit everything built with it goes into,
+    // dice for it (R2), and a builder and a world that are thrown away, for the boxes the
+    // town and the mill used to be (they still throw their dice)
+    kit.tuMats = tuscanMaterials(strokes);
+    kit.tk = new TuscanKit(kit.tuMats);
+    kit.R2 = rng(1452);
+    kit.burn = { B: new Builder(), W: { heightAt: H, colliders: [], glows: [] } };
 
     // The order below is the order the world is made in. Every part draws from R and adds
     // to the shared builders, colliders and maps in turn, so moving one changes all that follow.
@@ -144,6 +153,8 @@ export class MonaWorld extends World {
 
     seatLisa(this, kit);
     buildTravellers(this, kit);
+    this.tuscany = addTuscany(this, kit);
+    this.tuscany.tick(0, 12, { x: 0, y: 30, z: 0 });
     // every glow the parts have left in the air, as one set of points; then the ground maps are complete
     S.add(glowPoints(this.glows, 0.55));
     maps.finish();
@@ -164,7 +175,8 @@ export class MonaWorld extends World {
   }
 
   // whatever moves is moved by the part that built it, in the order it always was
-  tick(dt, time) {
+  tick(dt, time, player, game) {
+    if (game) this.tuscany?.tick(dt, time, game.camera.position);
     tickMill(this, time);
     this.tickNotebooks(time);
     tickFlyers(this, time);

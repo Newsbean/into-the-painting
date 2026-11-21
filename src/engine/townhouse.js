@@ -1,18 +1,22 @@
-// The houses of Kristiania in the 1890s.
+// Houses for a town, for any world: walls with real openings, a pitched roof, chimneys.
+// They are painted from the kit they are given: its materials (boards, plaster, brick,
+// roof, stone, detail), its parts ('window', 'door', 'gate', 'hoist') and its palette
+// (kit.pal: BOARD, PLASTER, SHED, ROOF, TRIM, STONE, STONE_D, LIT, DARK). Kristiania's
+// kit makes them Norwegian (worlds/scream/kristiania), the Tuscan kit Italian
+// (worlds/mona/tuscany).
 //
-//   townHouse(kit, world, { x, z, ry, w, d, R, floors, clad, lit, wall, roof })
+//   townHouse(kit, world, { x, z, ry, w, d, R, floors, clad, lit, wall, roof, pitch, chimneys, shutter })
 //       eaves to the street: a board house painted ochre, ox-blood or white with white
 //       frames (clad 'boards'), or a plastered block of flats with a cornice ('plaster')
 //   warehouse(kit, world, { x, z, ry, w, d, R })
 //       a tall wooden shed on the quay, gable to the water, loading doors one above another
 //       under a hoist
 //
-// The front is local +z. kit is a KristianiaKit. Lab: /?debug&look=scream&lab=worlds/scream/kristiania/lab.js
+// The front is local +z.
 import * as THREE from 'three';
-import { xf } from '../../../engine/build.js';
-import { at, wallBand, reveal, pane, slab, cuboid, partMatrix } from '../../../engine/facade.js';
-import { vnoise } from '../../../engine/gl.js';
-import { KR } from './kit.js';
+import { xf } from './build.js';
+import { at, wallBand, reveal, pane, slab, cuboid, partMatrix } from './facade.js';
+import { vnoise } from './gl.js';
 
 const pick = (R, a) => a[(R() * a.length) | 0];
 const _t = new THREE.Color();
@@ -34,7 +38,7 @@ export const shut = (s) => {
   for (const k in s) s[k].set(null).facing(null);
 };
 // a lit window, or a dark one with the last of the sky in it
-function glaze(s, R, F, op, lit, depth = 0.1) {
+function glaze(KR, s, R, F, op, lit, depth = 0.1) {
   const on = R() < lit;
   const c = new THREE.Color(on ? pick(R, KR.LIT) : KR.DARK).multiplyScalar(on ? 0.85 + R() * 0.3 : 0.7 + R() * 0.7);
   reveal(s.detail, F, op, depth, 0x2a2430);
@@ -44,6 +48,7 @@ function glaze(s, R, F, op, lit, depth = 0.1) {
 
 // ---------------------------------------------------------------- a house on a street
 export function townHouse(kit, world, o) {
+  const KR = kit.pal;
   const R = o.R,
     { w, d } = o;
   const plaster = (o.clad ?? 'boards') === 'plaster';
@@ -51,7 +56,8 @@ export function townHouse(kit, world, o) {
   const fH = plaster ? 3.4 : 2.9,
     plinth = 0.55,
     hW = plinth + floors * fH + 0.35;
-  const pitch = plaster ? 0.5 : 0.62 + R() * 0.2,
+  const steep = plaster ? 0.5 : 0.62 + R() * 0.2,
+    pitch = o.pitch ?? steep,
     over = 0.4,
     rise = (d / 2 + over) * Math.tan(pitch);
   const gy = o.y ?? world.heightAt(o.x, o.z);
@@ -92,8 +98,8 @@ export function townHouse(kit, world, o) {
         reveal(s.detail, F.front, op, 0.1, 0x2a2430);
         kit.place('door', partMatrix(M, F.front, op.x0, op.y0, op.x1 - op.x0, op.y1 - op.y0), doorC);
       } else {
-        const on = glaze(s, R, F.front, op, lit);
-        kit.place('window', partMatrix(M, F.front, op.x0, op.y0, op.x1 - op.x0, op.y1 - op.y0), 0xffffff);
+        const on = glaze(KR, s, R, F.front, op, lit);
+        kit.place('window', partMatrix(M, F.front, op.x0, op.y0, op.x1 - op.x0, op.y1 - op.y0), o.shutter ?? 0xffffff);
         // lamplight from a ground-floor window lies on the street
         if (on && f === 0 && R() < 0.5) {
           const q = W3(-w / 2 + (op.x0 + op.x1) / 2, 0, zf + 1.6);
@@ -112,12 +118,12 @@ export function townHouse(kit, world, o) {
   for (let f = 0; f < floors; f++) {
     const ops = backOps.filter((p) => p.f === f);
     wallBand(wall, F.back, plinth + f * fH, f === floors - 1 ? hW : plinth + (f + 1) * fH, ops, wallCol);
-    for (const op of ops) glaze(s, R, F.back, op, lit * 0.7);
+    for (const op of ops) glaze(KR, s, R, F.back, op, lit * 0.7);
   }
   for (const k of ['left', 'right']) {
     const op = floors > 1 ? [{ x0: d / 2 - 0.42, x1: d / 2 + 0.42, y0: plinth + fH + 0.95, y1: plinth + fH + 2.25 }] : [];
     wallBand(wall, F[k], plinth, hW, op, wallCol);
-    for (const p of op) glaze(s, R, F[k], p, lit * 0.6);
+    for (const p of op) glaze(KR, s, R, F[k], p, lit * 0.6);
     wall.tri(at(F[k], -over * 0.2, hW), at(F[k], d + over * 0.2, hW), at(F[k], d / 2, hW + rise - 0.06), wallCol);
     // an attic window in the gable
     if (rise > 2.4) {
@@ -144,8 +150,8 @@ export function townHouse(kit, world, o) {
     const op = { x0: 0.3, x1: dw - 0.3, y0: dy + 0.25, y1: dy + dh - 0.15 };
     wallBand(wall, Fd, dy - 0.2, dy + dh, [op], wallCol);
     wall.tri(at(Fd, 0, dy + dh), at(Fd, dw, dy + dh), at(Fd, dw / 2, dy + dh + 0.65), wallCol);
-    glaze(s, R, Fd, op, lit);
-    kit.place('window', partMatrix(M, Fd, op.x0, op.y0, op.x1 - op.x0, op.y1 - op.y0), 0xffffff);
+    glaze(KR, s, R, Fd, op, lit);
+    kit.place('window', partMatrix(M, Fd, op.x0, op.y0, op.x1 - op.x0, op.y1 - op.y0), o.shutter ?? 0xffffff);
     for (const sx of [-1, 1]) {
       wall.facing([0, dy, dz - 0.5]);
       wall.quad([sx * dw * 0.5, dy - 0.2, dz], [sx * dw * 0.5, dy - 0.2, dz - 2.2], [sx * dw * 0.5, dy + dh, dz - 2.2], [sx * dw * 0.5, dy + dh, dz], wallCol);
@@ -156,7 +162,7 @@ export function townHouse(kit, world, o) {
     }
   }
   // chimneys of brick, with a pot
-  for (let k = 0, nc = 1 + (w > 8 ? 1 : 0); k < nc; k++) {
+  for (let k = 0, nc = o.chimneys ?? 1 + (w > 8 ? 1 : 0); k < nc; k++) {
     const cx = (nc === 1 ? (R() - 0.5) * 0.4 : (k - 0.5) * 0.6) * w,
       cz = (R() - 0.5) * 1.2,
       ct = hW + rise + 0.7 + R() * 0.5;
@@ -169,6 +175,7 @@ export function townHouse(kit, world, o) {
 
 // ---------------------------------------------------------------- a warehouse on the quay
 export function warehouse(kit, world, o) {
+  const KR = kit.pal;
   const R = o.R,
     { w, d } = o;
   const floors = o.floors ?? 3 + (R() < 0.4 ? 1 : 0),
@@ -202,7 +209,7 @@ export function warehouse(kit, world, o) {
           reveal(s.detail, F[k], op, 0.08, 0x2a2430);
           if (k === 'front' || f === 0) kit.place('gate', partMatrix(M, F[k], op.x0, op.y0, op.x1 - op.x0, op.y1 - op.y0), doorC);
           else pane(s.boards, F[k], op.x0, op.x1, op.y0, op.y1, -0.08, doorC);
-        } else glaze(s, R, F[k], op, 0.25, 0.06);
+        } else glaze(KR, s, R, F[k], op, 0.25, 0.06);
       }
     }
     s.boards.tri(at(F[k], 0, hW), at(F[k], w, hW), at(F[k], w / 2, hW + rise - 0.05), wallCol);

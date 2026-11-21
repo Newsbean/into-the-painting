@@ -62,6 +62,9 @@ src/
     facade.js          walls with openings, reveals, slabs: the pieces of any facade
     kit.js             Kit: a block of buildings as a few merged meshes plus instanced details
     plan.js            town planning: rows of lots along both sides of every street
+    townhouse.js       townHouse() and warehouse(): houses with real openings, painted from whatever kit they are given
+    animals.js         horse, cow (or ox), sheep
+    plants.js          grass, bracken, scrub, stones: what grows anywhere
     world.js           World base class: collision, story markers, the colour waves
     post.js sky.js player.js audio.js ui.js models.js
   worlds/<id>/       one folder per painting
@@ -72,7 +75,8 @@ src/
   worlds/wave/edo/     the Edo kit: merchant houses, storehouses, farmhouses, pagoda, castle
   worlds/pearl/delft/  the Delft kit: canal houses, the Nieuwe Kerk, town hall, mill, gate, ship
   worlds/scream/kristiania/  the Kristiania kit: board houses, warehouses, church, barque, people
-  worlds/scream/country/     hill farms, boathouses, animals, forest and ground cover
+  worlds/scream/country/     hill farms, boathouses, forest and ground cover
+  worlds/mona/tuscany/       the Tuscan kit: tower houses, church, town wall, bridge, people, cypress and olive
   dev/               development only, never shipped: lab.js, film.js
 ```
 
@@ -216,13 +220,11 @@ The Scream's town of the 1890s, and the Norwegian hillside it lies under.
 | File | What it gives you |
 |---|---|
 | `kristiania/kit.js` | `kristianiaMaterials(strokes)`, `KristianiaKit`, and the parts: casement windows, panelled doors, warehouse gates, hoists, gas lamps, barrels, crates, bollards |
-| `kristiania/house.js` | `townHouse` (painted boards or plaster; `wall` and `roof` set its colours) and `warehouse` |
 | `kristiania/landmarks.js` | `church`, `barque`, `sjekteGeo` (a small boat under sail) |
 | `kristiania/people.js` | `kristianiaPerson`: overcoats and long dresses, and with `col`, `hat`, `arms`, `lean` the same figure is a dancer, a girl at a railing, a farmer; `seatedMan` |
 | `kristiania/town.js` | the town itself: quay, Karl Johan, the square, the pier, lamps, people, boats, gulls, smoke |
 | `country/plan.js` | `YARDS`: the terraces cut into the hill for the farms, his garden and the green by the water |
 | `country/farm.js` | `barn` (stone byre, red hayloft, a bridge to its door), `stabbur` (storehouse on legs), `naust` (boathouse on a landing), `skigard` (the leaning-rail fence), `hesje` (hay on a rack), `cart`, `rowboat` |
-| `country/animals.js` | `horse`, `cow`, `sheep`: one skin over rings from tail to nose; `graze` puts the head down |
 | `country/plants.js` | spruce, pine, birch and rowan made of brush dabs, juniper, scrub, heather, bracken, grass, stones |
 | `country/index.js` | lays all of it out, and puts walkers and hay carts on the road |
 
@@ -232,6 +234,20 @@ The trees and box houses the hill used to have still throw theirs into builders 
 draws (`land.js`, `munch/`), which is how the rest of the world has stayed where it was.
 
 Lab: `/?debug&look=scream&lab=worlds/scream/kristiania/lab.js`
+
+## The Tuscan kit (`src/worlds/mona/tuscany`)
+
+The Mona Lisa's valley about 1503: stucco the colour of the earth, rough stone, terracotta.
+
+| File | What it gives you |
+|---|---|
+| `kit.js` | `tuscanMaterials(strokes)`, `TuscanKit`, its palette `TU`, and the parts: shuttered windows, arched doors, market stalls, oil jars, barrels, lanterns |
+| `build.js` | `torre` (tower house), `pieve` (church and bell tower), `mura` (town wall and gate), `ponte` (the bridge of round arches) |
+| `life.js` | `tuscanPerson`, and what grows only here: `cypressGeo`, `olivoGeo`, `pinoGeo` (umbrella pine), `viteGeo` (a vine on its stake), `fioreGeo`; `pagliaio` (a haystack) |
+| `index.js` | lays it out: the walled town on its hill, farms with groves and vineyards, oxen, sheep, walkers, pigeons, smoke, ground cover |
+
+The houses themselves are the engine's (`engine/townhouse.js`): give it another kit, with its
+own materials, parts and palette (`kit.pal`), and the same generator builds another country.
 
 ## House rules
 

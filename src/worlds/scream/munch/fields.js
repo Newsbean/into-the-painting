@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import { Builder, patch, house, mix } from '../../../engine/build.js';
 import { yardAt } from '../country/plan.js';
 import { skigard, hesje } from '../country/farm.js';
-import { horse } from '../country/animals.js';
+import { horse } from '../../../engine/animals.js';
 
 // --- worked land on the hillside: strips of plough, pasture and stubble; hay on the racks,
 // a team at the plough, a fence along the foot of each field. (The farms themselves stand

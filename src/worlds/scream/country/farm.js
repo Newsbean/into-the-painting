@@ -18,7 +18,7 @@ import { xf } from '../../../engine/build.js';
 import { at, wallBand, reveal, pane, slab, cuboid, partMatrix } from '../../../engine/facade.js';
 import { vnoise } from '../../../engine/gl.js';
 import { KR } from '../kristiania/kit.js';
-import { sides, open, shut, warehouse } from '../kristiania/house.js';
+import { sides, open, shut, warehouse } from '../../../engine/townhouse.js';
 
 const pick = (R, a) => a[(R() * a.length) | 0];
 const _t = new THREE.Color();

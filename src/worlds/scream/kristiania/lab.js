@@ -3,7 +3,7 @@
 //   ...&seed=7                                                  other houses
 import { rng } from '../../../engine/gl.js';
 import { KristianiaKit, kristianiaMaterials } from './kit.js';
-import { townHouse, warehouse } from './house.js';
+import { townHouse, warehouse } from '../../../engine/townhouse.js';
 
 export function lab(world, { params }) {
   const R = rng(Number(params.get('seed') || 1893));

@@ -1,5 +1,5 @@
 import { house } from '../../../engine/build.js';
-import { townHouse } from '../kristiania/house.js';
+import { townHouse } from '../../../engine/townhouse.js';
 
 // --- his own little house, ochre with white trim under red tiles, an easel in the garden,
 // four girls by the wall

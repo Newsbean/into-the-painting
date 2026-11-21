@@ -27,11 +27,17 @@ export function buildLand(world, kit) {
 
 // ---------------- roads that wind the way his do
 // Returns what the later parts need to keep clear of them: { roadSamples, nearRoad }.
+// the roads: A from the workshop to the hill town, B off it over the bridge to the crag, C out of the back gate
+export const ROADS = {
+  A: [[-12, -10], [-30, -34], [-12, -66], [-36, -98], [-72, -104], [-98, -128], [-118, -144]],
+  B: [[-12, -66], [20, -98], [44, -116], [80, -122], [104, -108], [116, -72], [120, -56]],
+  C: [[0, 24], [2, 46], [-10, 74], [18, 104]],
+};
 export function buildRoads(world, kit) {
   const { S, H, soft, strokes } = kit;
-  const roadA = [[-12, -10], [-30, -34], [-12, -66], [-36, -98], [-72, -104], [-98, -128], [-118, -144]];
-  const roadB = [[-12, -66], [20, -98], [44, -116], [80, -122], [104, -108], [116, -72], [120, -56]];
-  const roadC = [[0, 24], [2, 46], [-10, 74], [18, 104]];
+  const roadA = ROADS.A,
+    roadB = ROADS.B,
+    roadC = ROADS.C;
   const RB = new Builder();
   for (const r of [roadA, roadC]) RB.parts.push(ribbon(r, 4.4, H, dust, { lift: 0.14, across: 4 }));
   RB.parts.push(ribbon(roadB.slice(0, 3), 4.2, H, dust, { lift: 0.14, across: 4 }));

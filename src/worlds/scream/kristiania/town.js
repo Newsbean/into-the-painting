@@ -16,7 +16,7 @@ import { Walkers, way } from '../../../engine/walkers.js';
 import { birdFlocks, wheel } from '../../../engine/flock.js';
 import { addSmoke, addPetals } from '../../../engine/air.js';
 import { KristianiaKit, kristianiaMaterials, KR } from './kit.js';
-import { townHouse, warehouse } from './house.js';
+import { townHouse, warehouse } from '../../../engine/townhouse.js';
 import { church, barque, sjekteGeo } from './landmarks.js';
 import { kristianiaPerson, kristianiaCrowd } from './people.js';
 

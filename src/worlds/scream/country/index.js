@@ -16,13 +16,13 @@ import { Soup } from '../../../engine/soup.js';
 import { weld } from '../../../engine/weld.js';
 import { Walkers, way } from '../../../engine/walkers.js';
 import { addSmoke } from '../../../engine/air.js';
-import { townHouse } from '../kristiania/house.js';
+import { townHouse } from '../../../engine/townhouse.js';
 import { kristianiaPerson } from '../kristiania/people.js';
 import { townWeight } from '../kristiania/town.js';
 import { YARDS, yardAt, local } from './plan.js';
 import { spruceGeo, pineGeo, birchGeo, juniperGeo, scrubGeo, heatherGeo, tuftGeo, fernGeo, rockGeo } from './plants.js';
 import { barn, stabbur, naust, skigard, hesje, cart, rowboat } from './farm.js';
-import { horse, cow, sheep } from './animals.js';
+import { horse, cow, sheep } from '../../../engine/animals.js';
 
 const SPRUCE = [0x16302c, 0x1c3a34, 0x12282c, 0x24443a, 0x1a2c3a, 0x2a4a3a];
 const PINE = [0x1c3a30, 0x24443a, 0x2a4a34];

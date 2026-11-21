@@ -1,4 +1,4 @@
-// The animals of a hill farm, drawn into a Soup: a fjord horse, a red cow, a sheep.
+// Farm animals for any world, drawn into a Soup: a horse, a cow (or an ox), a sheep.
 // Each body is one skin drawn over rings set along a line from tail to nose, so a back
 // runs into a neck and a neck into a head without a join; legs, ears, horns, mane and
 // tail are added to it.
@@ -10,8 +10,8 @@
 // They face local +z. `graze` puts the head down to the grass. The Soup must have no
 // matrix set (set(null)): each animal places itself.
 import * as THREE from 'three';
-import { xf } from '../../../engine/build.js';
-import { vnoise } from '../../../engine/gl.js';
+import { xf } from './build.js';
+import { vnoise } from './gl.js';
 
 const _c = new THREE.Color();
 const _c2 = new THREE.Color();
