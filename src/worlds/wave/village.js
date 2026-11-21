@@ -4,6 +4,7 @@ import { clamp } from '../../engine/gl.js';
 import { FOAM, VERMILION } from './palette.js';
 import { keptClear } from './ground-plan.js';
 import { machiya, minka, pagoda, rngAt } from './edo/house.js';
+import { matsu } from './plants.js';
 
 // The fishing village behind the workshop: its houses and lanterns, the
 // pagoda, the cooper at his barrel, the kites and the cherry trees.
@@ -98,7 +99,11 @@ export function addCherryTrees(world, { R, H, maps, T2, SPARE }) {
     const y = H(x, z);
     if (y < 2 || world.blocked(x, y + 1, z) || (Math.abs(x - 10) < 7 && z < 214)) continue;
     const open = !keptClear(x, z, 2);
-    blobTree(open ? T2 : SPARE, x, y, z, 5.2 + R() * 1.6, 2.5 + R() * 0.9, R, { lo: 0xe58aa6, hi: 0xffe0ea, trunk: 0x3a2622, blobs: 4, trunkH: 0.5 });
+    // the round tree this used to be still throws its dice (unseen); the cherry that stands here
+    // is drawn the way the prints draw a tree: a dark leaning trunk under flat clouds of blossom
+    const bh = 5.2 + R() * 1.6;
+    blobTree(SPARE, x, y, z, bh, 2.5 + R() * 0.9, R, { lo: 0xe58aa6, hi: 0xffe0ea, trunk: 0x3a2622, blobs: 4, trunkH: 0.5 });
+    if (open) matsu(T2, x, y, z, bh + 1.6, rngAt(x, z), { lo: 0xe58aa6, hi: 0xffe6ee, trunk: 0x3a2622, pads: 6 });
     world.colliders.push({ x, z, r: 0.4, top: y + 2.5, spare: !open });
     if (open) maps.blob(x, z, 3.6, 0.3);
     cn++;

@@ -1,11 +1,16 @@
 import * as THREE from 'three';
 import { Builder, terrain, house, pine, mix } from '../../engine/build.js';
-import { vnoise, smooth, lerp } from '../../engine/gl.js';
+import { vnoise, fbm, smooth, lerp } from '../../engine/gl.js';
 import { keptClear } from './ground-plan.js';
 import { machiya, rngAt } from './edo/house.js';
+import { matsu, sugi } from './plants.js';
 
 // The land you arrive on: the ground itself, Hokusai's workshop and its
 // neighbours, the pier, and the pines along the shore.
+
+const MEADOW = new THREE.Color(0x9fae66),
+  SHADE = new THREE.Color(0x3f6a55),
+  DAMP = new THREE.Color(0xb9a67c);
 
 // ---------------- shore
 export function addShore(world, { R, S, H, maps, flat, proxy }) {
@@ -18,7 +23,12 @@ export function addShore(world, { R, S, H, maps, flat, proxy }) {
     250,
     (x, z, y) => {
       const c = mix(sand, grass, smooth(1.6, 4.5, y + vnoise(x * 0.1, z * 0.1) * 1.5));
-      return c.lerp(new THREE.Color(hill), smooth(7, 22, y));
+      c.lerp(new THREE.Color(hill), smooth(7, 22, y));
+      // the green is not one green: sunlit meadow here, deeper shade there, in broad patches
+      c.lerp(MEADOW, smooth(0.5, 0.68, fbm(x * 0.021 + 11, z * 0.021, 3)) * smooth(2.5, 5, y) * (1 - smooth(18, 32, y)) * 0.65);
+      c.lerp(SHADE, smooth(0.52, 0.7, fbm(x * 0.017 + 40, z * 0.019 + 7, 3)) * smooth(3, 6, y) * 0.5);
+      // and the sand is damp and darker where the sea has just been
+      return c.lerp(DAMP, (1 - smooth(0.15, 1.0, y)) * 0.55);
     },
     0.6,
     2,
@@ -95,7 +105,10 @@ export function addShorePines(world, { R, S, H, maps, flat, SPARE }) {
     if (y < 2.2 || (Math.abs(x + 6) < 26 && z < 238) || (Math.abs(x - 10) < 6 && z < 212)) continue;
     const h = 7 + R() * 8;
     const open = !keptClear(x, z, 1.5);
-    pine(open ? T : SPARE, x, y, z, h, 3 + R() * 2, R, { lo: 0x25463a, hi: 0x3f7a5a, trunk: 0x5a3a2a, tiers: 3 + ((R() * 3) | 0) });
+    // the cone tree this used to be still throws its dice, into the builder that is thrown away;
+    // what stands here now is a pine as the prints draw one (a cryptomeria, up on the hills)
+    pine(SPARE, x, y, z, h, 3 + R() * 2, R, { lo: 0x25463a, hi: 0x3f7a5a, trunk: 0x5a3a2a, tiers: 3 + ((R() * 3) | 0) });
+    if (open) (y > 13 ? sugi : matsu)(T, x, y, z, h * 1.1, rngAt(x, z), { pads: 5 });
     world.colliders.push({ x, z, r: 0.5, top: y + h * 0.5, spare: !open });
     if (open) maps.blob(x, z, 4, 0.3);
     n++;

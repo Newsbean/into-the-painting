@@ -427,6 +427,8 @@ uniform float uStripe;
 uniform float uGlintAmt;
 uniform float uFlow;
 uniform float uSwell;
+uniform float uShore;   // foam where the water shoals on the land
+uniform float uLace;    // a broken line of foam along each swell
 varying vec3 vWorld;
 varying float vH;
 void main(){
@@ -455,6 +457,20 @@ void main(){
   col = mix(col, uFoam, foam * 0.85);
 
   vec2 muv = P.xz * uMapXf.xy + uMapXf.zw;
+  if (uLace > 0.0){
+    float ed = smoothstep(0.0, 0.1, stripe) * (1.0 - smoothstep(0.1, 0.34, stripe));
+    float brk = smoothstep(0.5, 0.62, texture2D(uNoise, P.xz * 0.006 + vec2(uTime * 0.004, 0.0)).g);
+    col = mix(col, uFoam, ed * brk * uLace);
+  }
+  if (uShore > 0.0){
+    // the water's edge, and two more lines of foam standing off it, all moving with the swell
+    float dep = P.y - texture2D(uHeightMap, muv).r;
+    float sc = 0.5 + 0.5 * sin(P.x * 0.8 + sin(P.z * 0.6 + uTime * 0.6) * 1.4);
+    float wash = 1.0 - smoothstep(0.0, 0.22, dep - (0.22 + 0.4 * sc));
+    float l2 = 1.0 - smoothstep(0.0, 0.14, abs(dep - 1.25 - 0.35 * sc) - 0.1);
+    float l3 = (1.0 - smoothstep(0.0, 0.12, abs(dep - 2.3 - 0.4 * sc) - 0.06)) * 0.7;
+    col = mix(col, uFoam, max(wash, max(l2, l3)) * uShore * step(dep, 4.0));
+  }
   float rimW;
   float nz = (sv - 0.5) * 6.0 + (texture2D(uNoise, P.xz * 0.0011).r - 0.5) * 18.0;
   float restore = restoreAt(P, nz, rimW);
@@ -490,6 +506,8 @@ export function waterMaterial(o = {}) {
       uGlintAmt: { value: o.glintAmt ?? 1.2 },
       uFlow: { value: o.flow ?? 0.02 },
       uSwell: { value: o.swell ?? 0 },
+      uShore: { value: o.shore ?? 0 },
+      uLace: { value: o.lace ?? 0 },
     },
   });
 }

@@ -14,6 +14,7 @@ import { buildPrints, blowPapers } from './prints/index.js';
 import { addStory } from './story.js';
 import { EdoKit, edoMaterials } from './edo/kit.js';
 import { addEdoTown, edoWeight, edoLevel, CASTLE } from './edo/town.js';
+import { addLife } from './life/index.js';
 
 // The Great Wave. This file is the world itself: its look, where you stand, the
 // lie of the land, and the order its parts are built in. The parts are in the
@@ -21,7 +22,7 @@ import { addEdoTown, edoWeight, edoLevel, CASTLE } from './edo/town.js';
 //
 //   sky.js          the sky
 //   sea.js          the sea and what is out on it: torii, islets, boats, plovers
-//   great-wave.js   every breaking wave, the great one first
+//   great-wave.js   every breaking wave, the great one first (wave-material.js paints them)
 //   distance.js     Fuji, the bands of mist, the far coast and its lights
 //   shore.js        the land, Hokusai's workshop, the pier, the shore pines
 //   village.js      the fishing village, pagoda, cooper, kites, cherry trees
@@ -29,6 +30,8 @@ import { addEdoTown, edoWeight, edoLevel, CASTLE } from './edo/town.js';
 //   story.js        the wisps, the memento, Hokusai, what the curator says
 //   edo/            the Edo kit (merchant houses, storehouses, farmhouses, pagoda, castle)
 //                   and the town of Edo at the west end of the coast road
+//   life/           what makes it lived in: grass and flowers, the hill forest, people
+//                   walking the roads, a daimyo's procession, birds, sails, petals, smoke
 //
 //   palette.js, ground-plan.js, helpers.js, figures.js, plants.js
 //                   the colours, the routes and kept ground, and the small
@@ -145,6 +148,9 @@ export class WaveWorld extends World {
     this.edo = addEdoTown(this, kit);
     const eb = this.edoKit.build();
     S.add(eb.base, eb.detail);
+    // and everything that lives and moves in it (it has its own dice, so it comes last)
+    this.life = addLife(this, kit);
+    this.life.tick(0, 12, { x: this.view.pos[0], y: this.view.pos[1], z: this.view.pos[2] });
     S.add(glowPoints(this.glows, 1));
     maps.finish();
 
@@ -158,6 +164,9 @@ export class WaveWorld extends World {
     const u = this.greatMesh.material.uniforms;
     u.uPulse.value = 1 - r;
     u.uSurge.value.x = lerp(1.5, 3.4, r);
+    // the foam and the clutching of the claws come with the height
+    u.uFoamAmt.value = lerp(0.45, 1, r);
+    u.uCurl.value = lerp(0.05, 0.16, r);
     this.wavePlat.y = 62 * sy;
     for (const c of this.waveCols) c.top = c.full * sy;
     this.spray.material.uniforms.uBoost.value = r;
@@ -167,7 +176,10 @@ export class WaveWorld extends World {
   }
 
   tick(dt, time, player, game) {
-    if (game) this.edo?.tick(game.camera.position);
+    if (game) {
+      this.edo?.tick(game.camera.position);
+      this.life?.tick(dt, time, game.camera.position);
+    }
     this.applyRise(this.thumbMode ? 1 : smooth(0.05, 1, this.final));
     // the sea stays pale until the final block is printed
     this.seaMat.uniforms.uDeep.value.copy(this.seaPale).lerp(this.seaDeep, this.final);

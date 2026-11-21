@@ -2,6 +2,7 @@
 // porters with a load at each end of a pole, a parasol here and there.
 //
 //   edoPerson(S, { x, y, z, ry, R, kind })    S: the 'detail' soup of an EdoKit
+//       robe, sash: colours, if they are not to be left to chance;  hat: 'kasa' | 'jingasa' | 'hair'
 //   edoCrowd(world, traces, streets, soupAt, R, n)    scatter them along the streets
 import * as THREE from 'three';
 import { xf } from '../../../engine/build.js';
@@ -27,15 +28,17 @@ export function edoPerson(S, o) {
   const k = 0.92 + R() * 0.12;
   const prev = S.m;
   S.set(xf(o.x, o.y, o.z, o.ry ?? 0, k, k, k));
-  const robe = pick(R, ROBE),
+  const robe = o.robe ?? pick(R, ROBE),
     skin = pick(R, SKIN);
   const sway = { sway: 0.02 };
   S.add(ROBE_G, robe, null, sway);
-  S.add(SASH_G, pick(R, SASH), T(0, 1.02, 0), sway);
+  S.add(SASH_G, o.sash ?? pick(R, SASH), T(0, 1.02, 0), sway);
   const reach = kind === 'porter' ? -1.2 : -0.12 - R() * 0.25;
   for (const sx of [-1, 1]) S.add(SLEEVE, robe, T(sx * 0.24, 1.14, 0.03, reach * (kind === 'porter' ? 1 : 0.6), 0, sx * 0.14), sway);
   S.add(HEAD, skin, T(0, 1.62, 0.005, 0, 0, 0, 1, 1.1, 1), sway);
-  if (kind === 'traveller' || kind === 'porter' || R() < 0.15) S.add(KASA, STRAW, T(0, 1.77, 0), sway);
+  const hat = o.hat ?? (kind === 'traveller' || kind === 'porter' || R() < 0.15 ? 'kasa' : 'hair');
+  if (hat === 'kasa') S.add(KASA, STRAW, T(0, 1.77, 0), sway);
+  else if (hat === 'jingasa') S.add(new THREE.ConeGeometry(0.33, 0.1, 12), 0x1c1c22, T(0, 1.75, 0), sway); // the flat lacquered hat of a retainer
   else {
     S.add(BALL, 0x15151a, T(0, 1.665, -0.015, 0, 0, 0, 0.112, 0.085, 0.118), sway);
     if (kind === 'townswoman') S.add(BALL, 0x15151a, T(0, 1.75, -0.04, 0, 0, 0, 0.075, 0.06, 0.075), sway);

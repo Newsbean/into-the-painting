@@ -1,6 +1,8 @@
 import * as THREE from 'three';
 import { paintMaterial, waterMaterial } from '../../engine/paint.js';
 import { Builder, pine, figure, mix, xf } from '../../engine/build.js';
+import { matsu } from './plants.js';
+import { rngAt } from './edo/house.js';
 import { clamp } from '../../engine/gl.js';
 import { PRUSSIAN, FOAM, VERMILION } from './palette.js';
 
@@ -12,7 +14,7 @@ import { PRUSSIAN, FOAM, VERMILION } from './palette.js';
 export function addSea(world, { S, strokes }) {
   const seaGeo = new THREE.PlaneGeometry(3200, 3200, 220, 220);
   seaGeo.rotateX(-Math.PI / 2);
-  world.seaMat = waterMaterial({ stroke: strokes.wood, deep: 0x7f9aa8, shallow: 0xb9cfd0, reflect: 0xb9cfd0, foam: FOAM, scale: 0.03, stripe: 0.88, glintAmt: 0, swell: 0.75, flow: 0.004 });
+  world.seaMat = waterMaterial({ stroke: strokes.wood, deep: 0x7f9aa8, shallow: 0xb9cfd0, reflect: 0xb9cfd0, foam: FOAM, scale: 0.03, stripe: 0.88, glintAmt: 0, swell: 0.75, flow: 0.004, shore: 1, lace: 0.6 });
   const sea = new THREE.Mesh(seaGeo, world.seaMat);
   sea.position.y = 0;
   sea.frustumCulled = false;
@@ -37,7 +39,7 @@ export function addGreatTorii(world, { X }) {
 }
 
 // --- islets: dark rock, a cap of moss, wind-bent pines
-export function addIslets(world, { R, X, T2 }) {
+export function addIslets(world, { R, X, T2, SPARE }) {
   const islets = [[122, 112, 14, 7], [-112, 134, 11, 6], [174, -22, 16, 9], [-196, -64, 18, 11], [66, -262, 14, 8], [236, 124, 12, 6], [-246, 112, 15, 8], [-150, -230, 15, 9], [250, -180, 17, 10]];
   islets.forEach(([ix, iz, r, h], n) => {
     for (let k = 0; k < 6; k++) {
@@ -49,7 +51,14 @@ export function addIslets(world, { R, X, T2 }) {
     X.cyl(r * 0.5, r * 0.62, 0.5, 0x6f8a5a, ix, h * 0.92, iz, 9);
     world.platforms.push({ minx: ix - r * 0.42, maxx: ix + r * 0.42, minz: iz - r * 0.42, maxz: iz + r * 0.42, y: h * 0.92 + 0.5 });
     world.colliders.push({ x: ix, z: iz, r: r * 0.7, top: h * 0.9 });
-    for (let k = 0; k < 2 + (n % 2); k++) pine(T2, ix + (R() - 0.5) * r * 0.6, h * 0.9, iz + (R() - 0.5) * r * 0.6, 6 + R() * 5, 2.6 + R() * 1.4, R, { lo: 0x25463a, hi: 0x3f7a5a, trunk: 0x5a3a2a, tiers: 3 });
+    for (let k = 0; k < 2 + (n % 2); k++) {
+      // wind-bent pines, as the prints draw them (the cone tree they used to be still throws its dice, unseen)
+      const px = ix + (R() - 0.5) * r * 0.6,
+        pz = iz + (R() - 0.5) * r * 0.6,
+        ph = 6 + R() * 5;
+      pine(SPARE, px, h * 0.9, pz, ph, 2.6 + R() * 1.4, R, { lo: 0x25463a, hi: 0x3f7a5a, trunk: 0x5a3a2a, tiers: 3 });
+      matsu(T2, px, h * 0.9, pz, ph * 1.15, rngAt(px, pz + k), { pads: 4 });
+    }
     if (n % 3 === 0) {
       // a wayside shrine
       X.box(1.4, 0.3, 1.2, 0x8a8a84, ix + 1.5, h * 0.92 + 0.5, iz);
